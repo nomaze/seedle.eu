@@ -1,0 +1,36 @@
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local prototype data (database, uploaded photos)
+.data/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+.DS_Store
+npm-debug.log*
+apps/web/public/vendor/
+!.env.example
+
+# Python & SQLite
+__pycache__/
+*.py[cod]
+*.db
+*.db-shm
+*.db-wal
+*.db.tmp
+
+# Credentials & Local Secrets (Strictly local, never commit)
+.credentials/
+.secrets/
+.github_token
+*.token
+*.secret
+

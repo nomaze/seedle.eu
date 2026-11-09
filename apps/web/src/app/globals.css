@@ -1,0 +1,521 @@
+@import "tailwindcss";
+
+/*
+ * seedle by NoMaze — Design System
+ *
+ * Cream (sand) as base canvas, field green (leaf) for actions and typography, soil
+ * (kernel) for the seed symbol. Sky (air) reserved exclusively for rain in the weather forecast.
+ * Poppy red (poppy) and bee yellow (bee) for subtle accents. Colors from the
+ * "seedle" brand palette for light surfaces: primary #2C7A52 (leaf-700),
+ * accent #7DBE72 (leaf-400), background #F5F0E1 (sand-50), text #1F5C3F
+ * (leaf-800 and ink), soil #9A6A3F (kernel). All colors, radii, and shadows
+ * are declared here; components must only use these tokens. See docs/DESIGN.md.
+ */
+@theme {
+  /* Base canvas: Brand palette cream (background #F5F0E1) */
+  --color-sand-25: #faf7ef;
+  --color-sand-50: #f5f0e1;
+  --color-sand-100: #eee7d2;
+  --color-sand-200: #e5dbc0;
+  --color-sand-300: #d6c7a1;
+  --color-sand-400: #c2ad80;
+
+  /* Sky: reserved for rain and clouds in weather forecasts */
+  --color-air-25: #f7fbfe;
+  --color-air-50: #eef7fd;
+  --color-air-100: #def0fb;
+  --color-air-200: #c3e3f7;
+  --color-air-300: #98cdef;
+  --color-air-500: #3e95d0;
+  --color-air-600: #2c7ab3;
+  --color-air-700: #215f8c;
+  --color-air-800: #18476a;
+
+  /* Field: primary #1F5C3F (buttons, links), leaf accent #3F8A4E,
+     deep green #17462F, text #1F5C3F */
+  --color-leaf-50: #eef6ef;
+  --color-leaf-100: #dcecdc;
+  --color-leaf-200: #c2e2bc;
+  --color-leaf-300: #a8d8a0;
+  --color-leaf-400: #3f8a4e;
+  --color-leaf-500: #3f8a4e;
+  --color-leaf-600: #2c7a52;
+  --color-leaf-700: #1f5c3f;
+  --color-leaf-800: #1f5c3f;
+  --color-leaf-900: #17462f;
+
+  --color-poppy: #e0533a;
+  --color-poppy-soft: #fbe5df;
+  /* bee: warm subtle accents (demo data, photo tasks, "observe"), in seedle
+     theme soil on green instead of bee yellow */
+  --color-bee: #c9945f;
+  --color-bee-soft: #f4e8d8;
+  /* Typography on bee-soft (badges, photo task) */
+  --color-bee-text: #7d5532;
+  /* Sun: sun symbols in weather forecast */
+  --color-sun: #e0a82e;
+  /* Ambient top-right background highlight (Scenery.tsx) */
+  --color-licht: rgb(168 216 160 / 0.3);
+  /* Soil: lower half of seed grain (soil #9A6A3F, on green #C9945F) */
+  --color-kernel: #9a6a3f;
+  --color-kernel-dark: #7d5532;
+
+  /* Text in dark green (6.9 : 1 on sand-50), muted text in greenish-gray (5.5 : 1) */
+  --color-ink: #1f5c3f;
+  --color-muted: #4a6656;
+  --color-line: #e0d6bf;
+  /* Warm white for cards, bars, and button labels */
+  --color-white: #fffdf7;
+
+  /*
+   * Status colors (field traffic light & action panel, package 6):
+   * status-ok: Green ("all good")
+   * status-action: Blue ("action required", distinct from air)
+   * status-problem: Yellow/Amber ("warning/problem", distinct from bee)
+   * status-urgent: Red ("immediate action required")
+   */
+  --color-status-ok: #15803d;
+  --color-status-ok-soft: #ecfdf5;
+  --color-status-ok-text: #14532d;
+  --color-status-ok-border: #86efac;
+
+  --color-status-action: #1d4ed8;
+  --color-status-action-soft: #eff6ff;
+  --color-status-action-text: #1e40af;
+  --color-status-action-border: #93c5fd;
+
+  --color-status-problem: #b45309;
+  --color-status-problem-soft: #fffbeb;
+  --color-status-problem-text: #78350f;
+  --color-status-problem-border: #fcd34d;
+
+  --color-status-urgent: #b91c1c;
+  --color-status-urgent-soft: #fef2f2;
+  --color-status-urgent-text: #7f1d1d;
+  --color-status-urgent-border: #fca5a5;
+
+  --font-sans: var(--font-figtree), ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 1.25rem;
+  --shadow-soft: 0 1px 2px rgb(23 70 47 / 0.04), 0 10px 28px -14px rgb(23 70 47 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(23 70 47 / 0.05), 0 18px 44px -18px rgb(23 70 47 / 0.26);
+
+  --animate-sway: sway 3.2s ease-in-out infinite;
+  --animate-drift: drift 90s ease-in-out infinite alternate;
+  --animate-buzz: buzz 7s ease-in-out infinite;
+  --animate-rise: rise 0.35s ease-out both;
+
+  @keyframes sway {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-7deg); }
+  }
+  @keyframes drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(-60px); }
+  }
+  @keyframes buzz {
+    0%, 100% { transform: translate(0, 0); }
+    25% { transform: translate(6px, -4px); }
+    50% { transform: translate(12px, 1px); }
+    75% { transform: translate(5px, 4px); }
+  }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+/*
+ * Demo settings brands (lib/demo.ts, ADR 0012).
+ * Controls official brand color schemes dynamically.
+ */
+
+/* Official Master Design (cream): background #F5F0E1, primary #1F5C3F, accent #3F8A4E, text #16301F, soil #9A6A3F */
+:root,
+:root[data-marke="cream"],
+:root[data-brand="cream"],
+:root[data-marke="seedle"],
+:root[data-brand="seedle"] {
+  --color-sand-25: #faf7ef;
+  --color-sand-50: #f5f0e1;
+  --color-sand-100: #eee7d2;
+  --color-sand-200: #e5dbc0;
+  --color-sand-300: #d6c7a1;
+  --color-sand-400: #c2ad80;
+  --color-leaf-50: #eef6ef;
+  --color-leaf-100: #dcecdc;
+  --color-leaf-200: #c2e2bc;
+  --color-leaf-300: #a8d8a0;
+  --color-leaf-400: #3f8a4e;
+  --color-leaf-500: #3f8a4e;
+  --color-leaf-600: #2c7a52;
+  --color-leaf-700: #1f5c3f;
+  --color-leaf-800: #1f5c3f;
+  --color-leaf-900: #16301f;
+  --color-kernel: #9a6a3f;
+  --color-kernel-dark: #7d5532;
+  --color-ink: #16301f;
+  --color-muted: #4a6656;
+  --color-line: #e0d6bf;
+  --color-white: #fffdf7;
+  --color-licht: rgb(168 216 160 / 0.3);
+}
+
+/* seedle · Field Green / Social Kit: surfaces #1F5C3F / #17462F, cream #F5F0E1, wheat gold soil #D7A774, sprout green accent #A8D8A0 */
+:root[data-marke="seedle-feldgruen"],
+:root[data-brand="seedle-feldgruen"] {
+  color-scheme: dark;
+  --color-sand-25: #236948;
+  --color-sand-50: #1f5c3f;
+  --color-sand-100: #1b5338;
+  --color-sand-200: #17462f;
+  --color-sand-300: #133c28;
+  --color-sand-400: #0f2e1f;
+  --color-leaf-50: #17462f;
+  --color-leaf-100: #1a4e35;
+  --color-leaf-200: #236948;
+  --color-leaf-300: #a8d8a0;
+  --color-leaf-400: #a8d8a0;
+  --color-leaf-500: #a8d8a0;
+  --color-leaf-600: #a8d8a0;
+  --color-leaf-700: #a8d8a0;
+  --color-leaf-800: #f5f0e1;
+  --color-leaf-900: #17462f;
+  --color-kernel: #d7a774;
+  --color-kernel-dark: #c4925e;
+  --color-bee: #d7a774;
+  --color-bee-soft: #275c42;
+  --color-bee-text: #f5f0e1;
+  --color-ink: #f5f0e1;
+  --color-muted: #cad8cf;
+  --color-line: #2d7352;
+  --color-white: #17462f;
+  --color-licht: rgb(168 216 160 / 0.15);
+}
+
+/* seedle · Dark Executive (Social Media Kit): NoMaze Obsidian #08100C / #17462F, Field Green #1F5C3F, Cream #F5F0E1, Wheat Gold #D7A774, Sprout Green #A8D8A0, Signal Orange #FF7B00 */
+:root[data-marke="seedle-dark"],
+:root[data-brand="seedle-dark"] {
+  color-scheme: dark;
+  --color-sand-25: #121e18;
+  --color-sand-50: #08100c;
+  --color-sand-100: #14231c;
+  --color-sand-200: #17462f;
+  --color-sand-300: #1c352a;
+  --color-sand-400: #2a4c3c;
+  --color-leaf-50: #13241c;
+  --color-leaf-100: #172d22;
+  --color-leaf-200: #1d392b;
+  --color-leaf-300: #a8d8a0;
+  --color-leaf-400: #a8d8a0;
+  --color-leaf-500: #1f5c3f;
+  --color-leaf-600: #ff7b00;
+  --color-leaf-700: #ff7b00;
+  --color-leaf-800: #f5f0e1;
+  --color-leaf-900: #08100c;
+  --color-poppy: #ff7b00;
+  --color-poppy-soft: #2e1d14;
+  --color-kernel: #d7a774;
+  --color-kernel-dark: #c4925e;
+  --color-bee: #d7a774;
+  --color-bee-soft: #24221c;
+  --color-bee-text: #f5f0e1;
+  --color-ink: #f5f0e1;
+  --color-muted: #8ea396;
+  --color-line: #1c3428;
+  --color-white: #101c16;
+  --color-licht: rgb(31 92 63 / 0.35);
+}
+
+/* Sortenkompass warm: Brand palette "Saatkorn-Nadel" (ADR 0010) */
+:root[data-marke="sortenkompass"],
+:root[data-brand="sortenkompass"] {
+  --color-sand-25: #fbf8f2;
+  --color-sand-50: #f7f2e7;
+  --color-sand-100: #f1e9d8;
+  --color-sand-200: #eae0ca;
+  --color-sand-300: #ddcca9;
+  --color-sand-400: #c9b48a;
+  --color-leaf-50: #f0f7ed;
+  --color-leaf-100: #e0efda;
+  --color-leaf-200: #c2deb7;
+  --color-leaf-300: #9dca8c;
+  --color-leaf-400: #79b263;
+  --color-leaf-500: #5c9745;
+  --color-leaf-600: #437231;
+  --color-leaf-700: #3f6b2e;
+  --color-leaf-800: #2b4c1e;
+  --color-leaf-900: #1f3516;
+  --color-bee: #d9a63a;
+  --color-bee-soft: #f7f1e3;
+  --color-bee-text: #7a5a00;
+  --color-sun: #d9a63a;
+  --color-kernel: #d9a63a;
+  --color-kernel-dark: #b48523;
+  --color-ink: #22201c;
+  --color-muted: #4f473b;
+  --color-line: #e3d8c3;
+  --color-white: #fffdf9;
+  --color-licht: rgb(217 166 58 / 0.22);
+}
+
+/* Sortenkompass blue: original sky-based brand appearance. Light surfaces (sand) use sky tones. */
+:root[data-marke="sortenkompass-blau"],
+:root[data-brand="sortenkompass-blau"] {
+  --color-sand-25: #f7fbfe;
+  --color-sand-50: #eef7fd;
+  --color-sand-100: #def0fb;
+  --color-sand-200: #c3e3f7;
+  --color-sand-300: #98cdef;
+  --color-sand-400: #6fb6e2;
+  --color-leaf-50: #f1f8ec;
+  --color-leaf-100: #e2f1d8;
+  --color-leaf-200: #c6e3b2;
+  --color-leaf-300: #a2d185;
+  --color-leaf-400: #7dbb5a;
+  --color-leaf-500: #5ba13b;
+  --color-leaf-600: #47862d;
+  --color-leaf-700: #376a24;
+  --color-leaf-800: #2a5119;
+  --color-leaf-900: #1d3912;
+  --color-bee: #f2c12e;
+  --color-bee-soft: #fdf4d6;
+  --color-bee-text: #7a5a00;
+  --color-sun: #f2c12e;
+  --color-kernel: #e8b54a;
+  --color-kernel-dark: #c78f22;
+  --color-ink: #1b2a21;
+  --color-muted: #3a4a40;
+  --color-line: #dce7df;
+  --color-white: #ffffff;
+  --color-licht: rgb(195 227 247 / 0.9);
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-sand-50);
+  color: var(--color-ink);
+  /* Background motives and wide containers may bleed over edges without horizontal scrollbars */
+  overflow-x: clip;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+/*
+ * Wide page container: breaks out of narrow layout column
+ * (max 72rem, centered). Used for landing page.
+ */
+.seite-breit {
+  width: min(100vw, 72rem);
+  margin-inline: calc(50% - min(50vw, 36rem));
+  padding-inline: 1rem;
+}
+@media (min-width: 640px) {
+  .seite-breit {
+    padding-inline: 1.5rem;
+  }
+}
+
+/*
+ * Motives: line illustrations in the background (components/motive).
+ * Each line has pathLength="1"; --motiv-off animates from 1 (hidden) to 0
+ * (fully drawn). Without animation, lines remain statically visible.
+ */
+@property --motiv-off {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+.motiv-linie {
+  fill: none;
+  stroke: var(--motiv-farbe, var(--color-leaf-400));
+  stroke-width: var(--motiv-staerke, 1.8);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: var(--motiv-off);
+}
+.motiv {
+  animation: motiv-zeichnen 2.4s cubic-bezier(0.3, 0.1, 0.2, 1) both;
+}
+.motiv .motiv-flaeche {
+  animation: motiv-einblenden 1.6s ease 0.6s both;
+}
+@keyframes motiv-zeichnen {
+  from {
+    --motiv-off: 1;
+  }
+  to {
+    --motiv-off: 0;
+  }
+}
+@keyframes motiv-einblenden {
+  from {
+    opacity: 0;
+  }
+}
+/* Where supported by browser, lower motives animate on scroll */
+@supports (animation-timeline: view()) {
+  .motiv-beim-scrollen {
+    animation-timeline: view();
+    animation-range: entry 5% cover 45%;
+    animation-duration: auto;
+  }
+  .motiv-beim-scrollen .motiv-flaeche {
+    animation-timeline: view();
+    animation-range: entry 25% cover 50%;
+    animation-duration: auto;
+    animation-delay: 0s;
+  }
+}
+
+/*
+ * Marquee / ticker (partner logos on landing page): smooth infinite scroll,
+ * fades on both edges, pauses on hover. Track contains list twice; -50% is one full list.
+ */
+.laufband {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.laufband-spur {
+  display: flex;
+  width: max-content;
+  animation: laufband 45s linear infinite;
+}
+.laufband:hover .laufband-spur {
+  animation-play-state: paused;
+}
+@keyframes laufband {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/*
+ * Spross area (components/spross/SprossCopilot.tsx), desktop.
+ * Fixed top-right, max 61.8vh height (Golden Ratio Phi = 1.618).
+ * Calm architectural frame with smooth bottom-left corner radius
+ * (Fibonacci 34px resting, 21px opened), scaling cleanly at any height.
+ */
+.spross-bereich {
+  transition: max-height 0.35s cubic-bezier(0.3, 0.1, 0.2, 1),
+    box-shadow 0.35s cubic-bezier(0.3, 0.1, 0.2, 1);
+}
+.spross-rahmen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.spross-flaeche {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(200deg, var(--color-leaf-50) 0%, #fbf8f2 55%, #fffdf9 100%);
+  border-bottom-left-radius: 34px;
+  border-left: 1px solid var(--color-leaf-200);
+  border-bottom: 1px solid var(--color-leaf-200);
+  box-shadow: var(--shadow-lift);
+  transition: border-radius 0.35s cubic-bezier(0.3, 0.1, 0.2, 1);
+}
+.spross-bereich[data-offen="true"] .spross-flaeche {
+  border-bottom-left-radius: 21px;
+}
+.spross-leiste-flaeche {
+  background: rgb(255 253 249 / 0.96);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid var(--color-leaf-200);
+}
+
+/*
+ * Content column: on medium screens shifts left to avoid Spross corner overlay
+ * (440px + gap). Centered on screens >= 1700px.
+ * Excludes wide landing page (.seite-breit).
+ */
+@media (min-width: 1024px) {
+  .seitenspalte:not(:has(> .seite-breit)) {
+    margin-left: max(1rem, min(calc(50vw - 24rem), calc(100vw - 29rem - 48rem)));
+    margin-right: 0;
+    width: min(48rem, calc(100vw - 29rem - 1rem));
+  }
+}
+
+::selection {
+  background: var(--color-leaf-200);
+}
+
+/* Tabular numbers for tables and rankings */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  /* Motives remain fully drawn with reduced motion */
+  .motiv,
+  .motiv .motiv-flaeche {
+    animation: none !important;
+  }
+  /* Marquee stays static and wraps logos for accessibility */
+  .laufband {
+    mask-image: none;
+  }
+  .laufband-spur {
+    animation: none !important;
+    width: auto;
+    flex-wrap: wrap;
+  }
+  .laufband-kopie {
+    flex-wrap: wrap;
+    row-gap: 0.75rem;
+  }
+  .laufband-kopie[aria-hidden="true"] {
+    display: none;
+  }
+}
+
+/* MapLibre: adjust control styles to design system */
+.maplibregl-ctrl-group {
+  border-radius: 0.75rem !important;
+  box-shadow: var(--shadow-soft) !important;
+}
+.maplibregl-ctrl-attrib {
+  font-size: 10px;
+}
+
+/*
+ * Spross interactive pointer: highlights active targets with pulsing red accent ring
+ */
+[data-spross-highlight="true"] {
+  outline: 3px solid #ef4444 !important;
+  outline-offset: 3px !important;
+  box-shadow: 0 0 0 6px rgba(239, 68, 68, 0.35), 0 10px 25px -5px rgba(239, 68, 68, 0.4) !important;
+  animation: spross-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite !important;
+  position: relative;
+  z-index: 30;
+  transition: box-shadow 180ms cubic-bezier(0.23, 1, 0.32, 1), outline-color 180ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@keyframes spross-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.45), 0 4px 12px rgba(239, 68, 68, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 9px rgba(239, 68, 68, 0.15), 0 10px 25px rgba(239, 68, 68, 0.45);
+  }
+}

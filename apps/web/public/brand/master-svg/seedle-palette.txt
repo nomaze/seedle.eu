@@ -1,0 +1,12 @@
+seedle · friendly master · colour palette
+
+On field green
+primary: #1F5C3F accent: #A8D8A0 background: #1F5C3F text: #F5F0E1
+deep green (second background): #17462F
+soil (lower half of the mark): #D7A774
+
+On cream
+primary: #1F5C3F accent: #3F8A4E background: #F5F0E1 text: #16301F
+soil (lower half of the mark): #9A6A3F
+
+Wordmark: Nunito Black (900), lowercase "seedle", letter spacing -0.02em (outlined in the SVG files)
