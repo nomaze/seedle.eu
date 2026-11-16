@@ -103,12 +103,14 @@ describe("DE/EN Language Switch & i18n System", () => {
       expect(t.shell.footerOffer).toBe("Provided by NoMaze · free for farmers");
     });
 
-    it("formats heroSubtitle with locale-aware thousands separators", () => {
+    it("formats heroSubtitle without fixed trial result count", () => {
       const deSub = getDictionary("de").landing.heroSubtitle(12500);
-      expect(deSub).toContain("12.500");
+      expect(deSub).toContain("feldgenaue Sorten- und Anbauempfehlungen");
+      expect(deSub).not.toContain("3.042");
 
       const enSub = getDictionary("en").landing.heroSubtitle(12500);
-      expect(enSub).toContain("12,500");
+      expect(enSub).toContain("Field-specific variety and cultivation recommendations");
+      expect(enSub).not.toContain("3,042");
     });
 
     it("falls back to DEFAULT_LOCALE ('de') on undefined or unknown locale", () => {

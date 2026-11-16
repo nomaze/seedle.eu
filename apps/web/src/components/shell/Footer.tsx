@@ -4,47 +4,39 @@ import Link from "next/link";
 import { useLanguage } from "./LanguageContext";
 
 /**
- * Global page footer component.
- * Displays copyright notices, data source attribution, legal imprint link,
- * and demo settings navigation when enabled.
+ * Global page footer: hairline, offer and data sources left, legal links right.
  */
 export function Footer({ showDemoSettings = false }: { showDemoSettings?: boolean }) {
   const { t } = useLanguage();
+  const link = "text-fg-muted underline-offset-4 transition-colors hover:text-fg hover:underline";
 
   return (
-    <footer className="mt-16 flex flex-col items-center justify-center gap-3 border-t border-line/60 pt-6 text-xs text-muted sm:flex-row sm:flex-wrap sm:gap-x-3 sm:gap-y-1.5">
-      <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 text-center">
+    <footer className="mt-20 flex flex-col gap-4 border-t border-divider pt-6 text-[13px] text-fg-muted sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-1">
         <span>{t.shell.footerOffer}</span>
-        <span aria-hidden>·</span>
-        <span>{t.shell.footerDwd}</span>
-        <span aria-hidden>·</span>
-        <span>{t.shell.footerMapSource}</span>
-        <span aria-hidden>·</span>
-        <Link
-          href="/impressum"
-          className="font-medium text-muted transition hover:text-ink hover:underline"
-        >
+        <span>
+          {t.shell.footerDwd} · {t.shell.footerMapSource}
+        </span>
+      </div>
+      <nav aria-label="Rechtliches und Über uns" className="flex flex-wrap gap-x-5 gap-y-2">
+        <Link href="/ueber-uns" className={link}>
+          {t.shell.footerAboutUs}
+        </Link>
+        <Link href="/warum-wir-das-machen" className={link}>
+          {t.shell.footerWhyWeDoThis}
+        </Link>
+        <Link href="/impressum" className={link}>
           {t.shell.footerImprint}
         </Link>
-        <span aria-hidden>·</span>
-        <Link
-          href="/datenschutz"
-          className="font-medium text-muted transition hover:text-ink hover:underline"
-        >
+        <Link href="/datenschutz" className={link}>
           {t.shell.footerPrivacy}
         </Link>
         {showDemoSettings ? (
-          <>
-            <span aria-hidden>·</span>
-            <Link
-              href="/demo"
-              className="font-medium text-muted transition hover:text-ink hover:underline"
-            >
-              {t.shell.footerDemoSettings}
-            </Link>
-          </>
+          <Link href="/demo" className={link}>
+            {t.shell.footerDemoSettings}
+          </Link>
         ) : null}
-      </div>
+      </nav>
     </footer>
   );
 }

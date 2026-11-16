@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { AnbauCropUsageSection } from "@/components/feld/AnbauCropUsageSection";
 import { PageHeader } from "@/components/shell/PageHeader";
-import { ChoiceLink } from "@/components/ui/Choice";
-import { KornIcon, SiloIcon } from "@/components/ui/CropIcons";
 import { PageSkeleton } from "@/components/ui/Skeleton";
+import { num } from "@/lib/format";
 import { requireField } from "@/server/pages";
 export { generateFieldStaticParams as generateStaticParams } from "@/server/static-params";
 
@@ -17,35 +17,27 @@ export default function AnbauPage({ params }: PageProps<"/feld/[fieldId]/anbau">
   );
 }
 
-async function Anbau({ params }: { params: Promise<{ fieldId: string }> }) {
+export async function Anbau({ params }: { params: Promise<{ fieldId: string }> }) {
   const { fieldId } = await params;
   const { field } = await requireField(fieldId);
+  const flaecheHa = field.areaHa;
 
   return (
-    <>
+    <div className="space-y-section">
       <PageHeader
         back={{ href: `/feld/${field.id}`, label: "Dein Feld" }}
-        eyebrow={`Schritt 2 von 3 · ${field.name}`}
+        eyebrow={`Schritt 2 · ${field.name} (${num(flaecheHa)} ha)`}
         title="Was willst du 2027 anbauen?"
-        lead="Wähl direkt die Nutzungsrichtung für deinen Mais. Wir ermitteln die besten Sorten für deinen Standort."
+        lead="Klick zuerst auf deine Hauptkultur und wähl danach direkt deine geplante Nutzungsrichtung."
       />
-      <div className="space-y-3">
-        <ChoiceLink
-          href={`/feld/${field.id}/ranking?usage=koernermais`}
-          icon={<KornIcon />}
-          title="Körnermais"
-          text="Zum Verkaufen oder Verfüttern. Wir rechnen mit Kornertrag, Trocknung und Preis."
-        />
-        <ChoiceLink
-          href={`/feld/${field.id}/ranking?usage=silomais`}
-          icon={<SiloIcon />}
-          title="Silomais"
-          text="Für Futter oder Biogas. Wir rechnen mit Trockenmasse und Stärke."
-        />
-      </div>
-      <p className="mt-5 text-sm text-muted">
-        Sonnenblumen, Weizen, Raps und die freie Wahl zwischen Kulturen kommen als Nächstes dazu.
-      </p>
-    </>
+
+      <AnbauCropUsageSection
+        fieldId={field.id}
+        fieldName={field.name}
+        areaHa={flaecheHa}
+        lat={field.lat}
+        lon={field.lon}
+      />
+    </div>
   );
 }

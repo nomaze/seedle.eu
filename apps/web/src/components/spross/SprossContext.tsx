@@ -239,51 +239,7 @@ export function SprossProvider({ children }: { children: ReactNode }) {
     };
   }, [activeHighlight]);
 
-  // Bidirectional highlighting & element focus radar
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    function handleMouseOver(e: MouseEvent) {
-      const target = (e.target as HTMLElement | null)?.closest<HTMLElement>(
-        "[data-spross-target]"
-      );
-      if (target) {
-        const id = target.getAttribute("data-spross-target");
-        if (id) {
-          // Exclude field-map from passive hover pulse
-          if (!isPassiveHoverTarget(id)) return;
-          setActiveHighlight(id);
-          const regEntry = registryRef.current.get(id);
-          const label =
-            target.getAttribute("data-spross-label") ||
-            regEntry?.label ||
-            target.getAttribute("aria-label") ||
-            target.innerText?.trim().slice(0, 60) ||
-            undefined;
-          const insight =
-            target.getAttribute("data-spross-insight") || regEntry?.insight || undefined;
-          setFocusedElementInfo({ targetId: id, label, insight });
-        }
-      }
-    }
-    function handleMouseOut(e: MouseEvent) {
-      const target = (e.target as HTMLElement | null)?.closest<HTMLElement>(
-        "[data-spross-target]"
-      );
-      if (target) {
-        const id = target.getAttribute("data-spross-target");
-        if (id) {
-          if (!isPassiveHoverTarget(id)) return;
-          setActiveHighlight((curr) => (curr === id ? null : curr));
-        }
-      }
-    }
-    document.addEventListener("mouseover", handleMouseOver);
-    document.addEventListener("mouseout", handleMouseOut);
-    return () => {
-      document.removeEventListener("mouseover", handleMouseOver);
-      document.removeEventListener("mouseout", handleMouseOut);
-    };
-  }, []);
+  // Passive mouseover highlighting is disabled so hovering over buttons never triggers green rings.
 
   // Component registration in Target Registry
   const registerTarget = useCallback((id: string, entry: SprossTargetEntry) => {

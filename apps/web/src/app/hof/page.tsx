@@ -5,7 +5,7 @@ import {
   type KnowledgeTopic,
   type Usage,
 } from "@seedle/core";
-import { ArrowRight, Plus, Sparkles } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -17,6 +17,8 @@ import { AskSprossButton } from "@/components/spross/AskSpross";
 import { Badge, FieldStatusBadge } from "@/components/ui/Badge";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
+import { Feldumriss } from "@/components/ui/Feldumriss";
+import { Kennzahl } from "@/components/ui/Kennzahl";
 import { PageSkeleton } from "@/components/ui/Skeleton";
 import { MARKEN_INFO } from "@/lib/demo";
 import { num } from "@/lib/format";
@@ -68,60 +70,70 @@ async function Hof({ user }: { user: CurrentUser }) {
   for (const w of wissen) nachThema.set(w.topic, [...(nachThema.get(w.topic) ?? []), w]);
 
   return (
-    <div className="seite-breit space-y-6">
+    <div className="space-y-section">
       <PageHeader
         back={{ href: "/", label: "Startseite" }}
         eyebrow={farm.ort ? `${farm.name} · ${farm.ort}` : farm.name}
         title="Mein Hof"
+        aside={
+          <>
+            {felder.length > 0 ? (
+              <>
+                <Kennzahl groesse="l" wert={felder.length} label={felder.length === 1 ? "Schlag" : "Schläge"} />
+                <Kennzahl groesse="l" wert={num(totalHa)} label="Hektar" />
+              </>
+            ) : null}
+            <ButtonLink href="/feld/neu" variant="secondary" size="sm">
+              <Plus className="size-4" aria-hidden /> Schlag anlegen
+            </ButtonLink>
+          </>
+        }
       />
 
-      {/* 2-column layout on desktop: Map & Action Panel */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
-        <div className="lg:col-span-7 xl:col-span-8 flex flex-col">
-          <Card className="flex-1 flex flex-col p-4 sm:p-5">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-line">
-              <SectionTitle hint={felder.length > 0 ? `${felder.length} Schläge · ${num(totalHa)} ha` : undefined}>
-                Hof & Schläge auf der Karte
-              </SectionTitle>
-            </div>
-            <HofMap
-              farm={farm}
-              fields={felder}
-              className="flex-1 min-h-[360px] sm:min-h-[420px] lg:min-h-[460px]"
-            />
-          </Card>
+      {/* 2-column layout on desktop: aerial map & what to do */}
+      <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12">
+        <div className="lg:col-span-7 xl:col-span-8">
+          <HofMap
+            farm={farm}
+            fields={felder}
+            className="h-[400px] sm:h-[460px] lg:h-[560px]"
+          />
         </div>
 
-        <div className="lg:col-span-5 xl:col-span-4 flex flex-col">
-          <HofActionPanel
-            fields={felder}
-            farmName={farm.name}
-            varieties={sorten}
-            className="min-h-[360px] sm:min-h-[420px] lg:min-h-[460px]"
-          />
+        <div className="lg:col-span-5 xl:col-span-4">
+          <HofActionPanel fields={felder} farmName={farm.name} varieties={sorten} />
         </div>
       </div>
 
-      {/* Field overview section below map */}
-      <Card>
-        <div className="flex items-center justify-between pb-3 border-b border-line">
-          <SectionTitle hint={`${felder.length} ${felder.length === 1 ? "Schlag" : "Schläge"} · ${num(totalHa)} ha`}>
+      {/* Fields as a table: outline, area, crop, variety 2027, stage, status */}
+      <section aria-labelledby="schlaege" className="pt-4">
+        <div className="mb-3 flex items-baseline justify-between gap-3">
+          <h2 id="schlaege" className="text-heading text-fg">
             Zu meinen Feldern
-          </SectionTitle>
-          <ButtonLink href="/feld/neu" variant="secondary" size="sm">
-            <Plus className="size-4" /> Schlag anlegen
-          </ButtonLink>
+          </h2>
         </div>
 
         {felder.length === 0 ? (
-          <div className="py-8 text-center text-muted">
+          <div className="border-t border-rule py-8 text-fg-muted">
             <p>Noch kein Schlag angelegt.</p>
             <ButtonLink href="/feld/neu" variant="primary" size="sm" className="mt-3">
-              <Plus className="size-4" /> Ersten Schlag hinzufügen
+              <Plus className="size-4" aria-hidden /> Ersten Schlag hinzufügen
             </ButtonLink>
           </div>
         ) : (
-          <ul className="divide-y divide-line">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[760px] border-collapse text-[0.9375rem]">
+            <thead>
+              <tr className="border-b border-rule text-left">
+                <th scope="col" className="text-caption font-semibold text-fg-muted pb-2.5 pr-4">Schlag</th>
+                <th scope="col" className="text-caption font-semibold text-fg-muted pb-2.5 pr-4 text-right">ha</th>
+                <th scope="col" className="text-caption font-semibold text-fg-muted pb-2.5 pr-4">Kultur</th>
+                <th scope="col" className="text-caption font-semibold text-fg-muted pb-2.5 pr-4">Sorte 2027</th>
+                <th scope="col" className="text-caption font-semibold text-fg-muted pb-2.5 pr-4 text-right">BBCH</th>
+                <th scope="col" className="text-caption font-semibold text-fg-muted pb-2.5">Status</th>
+              </tr>
+            </thead>
+            <tbody>
             {felder.map((f) => {
               const years = fieldYearsByField.get(f.id) ?? [];
               const y2027 = years.find((y) => y.jahr === 2027);
@@ -134,88 +146,79 @@ async function Hof({ user }: { user: CurrentUser }) {
               const isPlanned = Boolean(!isChosen && (y2027?.varietyId || y2027?.varietyText));
 
               const kulturText = f.crop === "mais" ? "Mais" : (f.crop || "Mais");
-              const nutzungText = f.usage ? (USAGE_LABEL[f.usage as Usage] ?? f.usage) : "";
+              const nutzungText = f.usage
+                ? USAGE_LABEL[f.usage as Usage] ??
+                  (f.usage === "biogas" || f.usage === "biogasmais" ? "Biogasmais" : f.usage)
+                : "";
               const kulturNutzung = nutzungText ? `${kulturText} (${nutzungText})` : kulturText;
 
               const aussaat = f.aussaat ? `${activeYear}-${f.aussaat.slice(5)}` : `${activeYear}-04-25`;
               const stadium = growthStage(aussaat, demo.datum ?? "2025-07-15");
 
+              const urgent = f.status === "status-urgent";
               return (
-                <li key={f.id}>
-                  <Link
-                    href={`/feld/${f.id}`}
-                    className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-4 hover:bg-sand-50/70 -mx-4 sm:-mx-6 px-4 sm:px-6 transition"
-                  >
-                    <div className="space-y-1.5 min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-ink group-hover:text-leaf-800 transition text-base">
-                          {f.name}
-                        </span>
-                        <FieldStatusBadge status={f.status} />
-                      </div>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
-                        <span className="font-medium text-ink">{num(f.areaHa)} ha</span>
-                        <span>·</span>
-                        <span>{kulturNutzung}</span>
-                        <span>·</span>
-                        <span>
-                          {isChosen && varietyName ? (
-                            <span className="text-leaf-800 font-semibold">
-                              Sorte: {varietyName} (gewählt) · BBCH {stadium.bbch} ({stadium.name})
-                            </span>
-                          ) : isPlanned && varietyName ? (
-                            <span className="text-status-action-text font-semibold">
-                              Sorte: {varietyName} (geplant)
-                            </span>
-                          ) : f.previousVarietyText ? (
-                            <span>
-                              Vorjahr: {f.previousVarietyText} ·{" "}
-                              <span className="text-status-problem-text font-medium">
-                                keine Sorte 2027
-                              </span>
-                            </span>
-                          ) : (
-                            <span className="text-status-problem-text font-medium">
-                              Noch keine Sorte gewählt
-                            </span>
-                          )}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-leaf-600 self-end sm:self-center shrink-0">
-                      <span className="text-xs font-semibold group-hover:underline">
-                        Schlagdetails
+                <tr key={f.id} className={`border-b border-divider ${urgent ? "bg-status-urgent-soft" : ""}`}>
+                  <td className="py-3.5 pr-4">
+                    <Link
+                      href={`/feld/${f.id}`}
+                      className="inline-flex items-center gap-2.5 font-bold text-fg hover:text-link"
+                    >
+                      <Feldumriss geometry={f.geometry} size={24} strokeWidth={2} />
+                      {f.name}
+                    </Link>
+                  </td>
+                  <td className="text-figure-s tabular-nums py-3.5 pr-4 text-right">{num(f.areaHa)}</td>
+                  <td className="py-3.5 pr-4">{kulturNutzung}</td>
+                  <td className="py-3.5 pr-4">
+                    {isChosen && varietyName ? (
+                      <span className="font-semibold">{varietyName}</span>
+                    ) : isPlanned && varietyName ? (
+                      <span>
+                        {varietyName} <span className="text-fg-muted">(geplant)</span>
                       </span>
-                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-                    </div>
-                  </Link>
-                </li>
+                    ) : (
+                      <span className="text-fg-muted">
+                        noch offen{f.previousVarietyText ? ` · Vorjahr ${f.previousVarietyText}` : ""}
+                      </span>
+                    )}
+                  </td>
+                  <td className="text-figure-s tabular-nums py-3.5 pr-4 text-right" title={stadium.name}>
+                    {stadium.bbch}
+                  </td>
+                  <td className="py-3.5">
+                    <FieldStatusBadge status={f.status} />
+                  </td>
+                </tr>
               );
             })}
-          </ul>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td className="pt-3 pr-4 text-small text-fg-muted">Summe</td>
+                <td className="text-figure-s tabular-nums pt-3 pr-4 text-right font-bold">{num(totalHa)}</td>
+                <td colSpan={4} />
+              </tr>
+            </tfoot>
+          </table>
+          </div>
         )}
-      </Card>
+      </section>
 
-      {/* Prominenter Link: „Meinen Hof simulieren“ */}
+      {/* Link to the farm simulation: one flat row */}
       <Link
         href="/hof/simulieren"
-        className="flex items-center gap-4 rounded-card border-2 border-leaf-300 bg-gradient-to-r from-leaf-50/90 via-white to-sand-50 p-5 shadow-soft transition hover:border-leaf-600 hover:shadow-lift"
+        className="group flex items-center gap-4 border-y border-divider py-5 transition-colors hover:bg-highlight"
       >
-        <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-leaf-700 text-white shadow-soft">
-          <Sparkles className="size-6" />
-        </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-leaf-950 text-base">Meinen Hof simulieren</span>
-            <span className="inline-flex items-center rounded-full bg-status-action-soft px-2.5 py-0.5 text-xs font-semibold text-status-action-text ring-1 ring-status-action-border">
-              Neu / Vorschau
-            </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-heading text-fg">Meinen Hof simulieren</span>
+            <Badge tone="neutral">Vorschau</Badge>
           </div>
-          <span className="block text-sm text-muted mt-0.5">
+          <span className="mt-1 block text-fg-muted">
             Der Hof unter verschiedenen Klimaszenarien für das nächste Jahr, mit jedem Schlag optimal gewählt und bewirtschaftet.
           </span>
         </div>
-        <ArrowRight className="size-5 shrink-0 text-leaf-600" />
+        <ArrowRight className="size-5 shrink-0 text-link transition-transform group-hover:translate-x-0.5" aria-hidden />
       </Link>
 
       {/* Betrieb & Hofstelle */}
@@ -223,8 +226,8 @@ async function Hof({ user }: { user: CurrentUser }) {
         <SectionTitle>Betrieb & Hofstelle</SectionTitle>
         <div className="space-y-3">
           <div>
-            <div className="font-medium text-ink">{farm.name}</div>
-            <div className="text-sm text-muted">
+            <div className="font-medium text-fg">{farm.name}</div>
+            <div className="text-small text-fg-muted">
               {farm.strasse || farm.plz || farm.ort ? (
                 <>
                   {[farm.strasse, [farm.plz, farm.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ")}
@@ -236,8 +239,8 @@ async function Hof({ user }: { user: CurrentUser }) {
             </div>
           </div>
 
-          <details className="text-sm">
-            <summary className="cursor-pointer font-medium text-leaf-700 hover:underline">
+          <details className="text-small">
+            <summary className="cursor-pointer font-medium text-link hover:underline">
               Betriebsdaten bearbeiten
             </summary>
             <EditFarmForm farm={farm} />
@@ -251,7 +254,7 @@ async function Hof({ user }: { user: CurrentUser }) {
           {demo.spross ? "Was Spross über deinen Hof weiß" : "Was wir über deinen Hof wissen"}
         </SectionTitle>
         {wissen.length === 0 ? (
-          <p className="text-muted">
+          <p className="text-fg-muted">
             {demo.spross
               ? "Noch nichts. Erzähl Spross von deinem Feld: Was stand dort, was lief gut, was nicht?"
               : "Noch nichts."}
@@ -260,17 +263,17 @@ async function Hof({ user }: { user: CurrentUser }) {
           <div className="space-y-4">
             {[...nachThema.entries()].map(([thema, eintraege]) => (
               <div key={thema}>
-                <div className="text-sm font-semibold text-leaf-700">
+                <div className="text-small font-semibold text-link">
                   {KNOWLEDGE_TOPIC_LABEL[thema as KnowledgeTopic] ?? thema}
                 </div>
                 <ul className="mt-1 space-y-1">
                   {eintraege.map((w) => (
-                    <li key={w.id} className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
+                    <li key={w.id} className="flex flex-wrap items-baseline justify-between gap-x-3 text-small">
                       <span>
                         {w.jahr ? <span className="font-medium">{w.jahr}: </span> : null}
                         {w.text}
                       </span>
-                      <span className="text-xs text-muted">
+                      <span className="text-caption text-fg-muted">
                         {w.source === "spross" ? "im Gespräch" : "eingetragen"} · {w.createdAt.toLocaleDateString("de-DE")}
                       </span>
                     </li>
@@ -283,7 +286,7 @@ async function Hof({ user }: { user: CurrentUser }) {
         <AskSprossButton className={`${buttonClass("secondary", "sm")} mt-4`}>
           Spross etwas erzählen
         </AskSprossButton>
-        <p className="mt-4 text-xs text-muted">
+        <p className="mt-4 text-caption text-fg-muted">
           Deine Angaben gehen an NoMaze und machen die Empfehlungen für dich und andere Betriebe genauer. Für dich bleibt {MARKEN_INFO[demo.marke].name} kostenlos.
         </p>
       </Card>
@@ -297,7 +300,7 @@ async function Hof({ user }: { user: CurrentUser }) {
             <Badge tone="leaf">bestätigt</Badge>
           </div>
         ) : (
-          <p className="text-muted">
+          <p className="text-fg-muted">
             Mit deiner E-Mail findest du deine Felder auf jedem Gerät wieder. Kein Passwort, nur ein Code.
           </p>
         )}

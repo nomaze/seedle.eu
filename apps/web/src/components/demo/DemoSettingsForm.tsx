@@ -2,6 +2,7 @@
 
 import { Check, Info, Lock, RotateCcw, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
+import { BackendStatusBadge } from "@/components/shell/BackendStatusBadge";
 import { useDemo } from "@/components/shell/DemoContext";
 import { useLanguage } from "@/components/shell/LanguageContext";
 import { Button, buttonClass } from "@/components/ui/Button";
@@ -16,6 +17,16 @@ import {
   type DemoEinstellungen,
   type Marke,
 } from "@/lib/demo";
+
+/** Option tile (design system): rectangular, control ring; selected with action ring on highlight. */
+function optionClass(selected: boolean, padding = "p-4") {
+  return `flex cursor-pointer flex-col justify-between rounded-control ${padding} transition-colors ${
+    selected ? "bg-highlight ring-2 ring-inset ring-action" : "ring-1 ring-inset ring-control hover:bg-action-subtle"
+  }`;
+}
+/** Checkbox rows like GOV.UK checkboxes: box left, label and hint right, hairlines between rows. */
+const TOGGLE_ROW = "flex cursor-pointer items-start gap-3 py-4";
+const CHECKBOX = "mt-0.5 size-5 shrink-0 accent-action";
 
 export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEinstellungen }) {
   const demoContext = useDemo();
@@ -96,10 +107,10 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-12">
       {gespeichert ? (
-        <div className="flex animate-rise items-center gap-3 rounded-card bg-leaf-50 px-4 py-3.5 font-medium text-leaf-800 ring-1 ring-leaf-200">
-          <Check className="size-5 shrink-0 text-leaf-600" />
+        <div role="status" className="flex items-start gap-3 border-l-4 border-status-ok py-1 pl-3 text-fg">
+          <Check className="mt-0.5 size-5 shrink-0 text-status-ok" aria-hidden />
           <span>
             Gespeichert. Die Demo nutzt jetzt <strong>{MARKEN_INFO[marke].demoLabel ?? MARKEN_INFO[marke].titel}</strong> am Stand vom{" "}
             <strong>{datum}</strong> (Login-Modus: <strong>{authModus === "auth0" ? "Offizieller NoMaze Auth0" : "Simulierter Demo-Login"}</strong>).
@@ -108,25 +119,20 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
       ) : null}
 
       {/* Sektion 1: Design / Marke */}
-      <Card className="space-y-4">
+      <Card>
         <SectionTitle hint="5 Design-Varianten">1. Design & Marke</SectionTitle>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {MARKEN.map((m) => {
             const info = MARKEN_INFO[m];
             const checked = marke === m;
             return (
-              <label
-                key={m}
-                className={`flex cursor-pointer flex-col justify-between rounded-2xl p-4 ring-1 transition ${
-                  checked ? "bg-leaf-50/70 ring-2 ring-leaf-600" : "bg-white ring-line hover:ring-leaf-300"
-                }`}
-              >
+              <label key={m} className={optionClass(checked)}>
                 <div>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={info.icon} alt="" width={32} height={32} className="size-8 shrink-0 rounded-lg object-contain" />
-                      <span className="font-bold text-ink">{info.demoLabel ?? info.name}</span>
+                      <img src={info.icon} alt="" width={32} height={32} className="size-8 shrink-0 rounded-control object-contain" />
+                      <span className="font-semibold text-fg">{info.demoLabel ?? info.name}</span>
                       {info.demoLabel && info.demoLabel !== info.name ? (
                         <span className="sr-only">{info.name}</span>
                       ) : null}
@@ -137,10 +143,10 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
                       value={m}
                       checked={checked}
                       onChange={() => handleMarkeChange(m)}
-                      className="size-4 text-leaf-600"
+                      className="size-4 shrink-0 accent-action"
                     />
                   </div>
-                  <p className="mt-3 text-xs leading-relaxed text-muted">{info.beschreibung}</p>
+                  <p className="mt-3 text-small text-fg-muted">{info.beschreibung}</p>
                 </div>
               </label>
             );
@@ -149,21 +155,15 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
       </Card>
 
       {/* Sektion 2: Authentifizierung / Login-Modus */}
-      <Card className="space-y-4">
+      <Card>
         <SectionTitle hint="Dual-Mode Authentifizierung">2. Authentifizierung / Login-Modus</SectionTitle>
         <div className="grid gap-3 sm:grid-cols-2">
           {/* Option A: Simulierter Demo-Login */}
-          <label
-            className={`flex cursor-pointer flex-col justify-between rounded-2xl p-4 ring-1 transition ${
-              authModus === "fake"
-                ? "bg-leaf-50/70 ring-2 ring-leaf-600"
-                : "bg-white ring-line hover:ring-leaf-300"
-            }`}
-          >
+          <label className={optionClass(authModus === "fake")}>
             <div>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 font-bold text-ink">
-                  <ShieldCheck className="size-5 text-leaf-700" />
+                <div className="flex items-center gap-2 font-semibold text-fg">
+                  <ShieldCheck className="size-5 text-link" aria-hidden />
                   <span>Simulierter Demo-Login</span>
                 </div>
                 <input
@@ -175,31 +175,23 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
                     setAuthModus("fake");
                     demoContext.updateDemo({ authModus: "fake" });
                   }}
-                  className="size-4 text-leaf-600"
+                  className="size-4 shrink-0 accent-action"
                 />
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-muted">
+              <p className="mt-2 text-small text-fg-muted">
                 Sofortiger Zugang ohne Backend oder Redirects. Perfekt für risikofreie Vorführungen
-                (1-Klick „Als Musterhof fortfahren“ oder 6-stelliger Test-Code <code className="rounded bg-cream-200 px-1 py-0.5 text-ink">123456</code>).
+                (1-Klick „Als Musterhof fortfahren“ oder 6-stelliger Test-Code <code className="font-semibold tabular-nums text-fg">123456</code>).
               </p>
             </div>
-            <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-leaf-800">
-              <span className="size-2 rounded-full bg-leaf-500" /> Standard für zero-friction Demo
-            </div>
+            <div className="mt-3 text-caption font-semibold text-fg-muted">Standard für zero-friction Demo</div>
           </label>
 
           {/* Option B: Offizieller NoMaze Auth0 Login */}
-          <label
-            className={`flex cursor-pointer flex-col justify-between rounded-2xl p-4 ring-1 transition ${
-              authModus === "auth0"
-                ? "bg-leaf-50/70 ring-2 ring-leaf-600"
-                : "bg-white ring-line hover:ring-leaf-300"
-            }`}
-          >
+          <label className={optionClass(authModus === "auth0")}>
             <div>
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 font-bold text-ink">
-                  <Lock className="size-5 text-leaf-800" />
+                <div className="flex items-center gap-2 font-semibold text-fg">
+                  <Lock className="size-5 text-link" aria-hidden />
                   <span>Offizieller NoMaze Auth0</span>
                 </div>
                 <input
@@ -211,175 +203,188 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
                     setAuthModus("auth0");
                     demoContext.updateDemo({ authModus: "auth0" });
                   }}
-                  className="size-4 text-leaf-600"
+                  className="size-4 shrink-0 accent-action"
                 />
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-muted">
+              <p className="mt-2 text-small text-fg-muted">
                 Echtes Enterprise Single Sign-On via <strong>auth.nomaze.com</strong>.
                 OIDC PKCE S256 Flow, Passwordless Email OTP sowie Event-Voucher Registrierung über NoMaze Single Sign-On (OAuth 2.0 PKCE).
               </p>
             </div>
-            <div className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-medium text-leaf-900">
-              <span className="size-2 rounded-full bg-leaf-700" /> Live Auth0 Tenant Integration
-            </div>
+            <div className="mt-3 text-caption font-semibold text-fg-muted">Live Auth0 Tenant Integration</div>
           </label>
         </div>
 
-        {/* Live Auth0 Technical Specs Inspector */}
+        {/* Live Auth0 technical specs as a summary list */}
         {authModus === "auth0" && (
-          <div className="rounded-xl border border-leaf-300 bg-leaf-50/60 p-3.5 text-xs text-ink/90">
-            <div className="flex items-center gap-1.5 font-semibold text-leaf-900">
-              <Info className="size-4" />
+          <div className="mt-8 max-w-measure">
+            <h3 className="flex items-center gap-1.5 text-subheading text-fg">
+              <Info className="size-4 text-link" aria-hidden />
               <span>Aktive Auth0-Konfiguration (auth.nomaze.com)</span>
-            </div>
-            <div className="mt-2 grid gap-1.5 font-mono text-[11px] sm:grid-cols-2">
-              <div>
-                <span className="text-muted">Issuer:</span> {AUTH0_CONFIG.issuer}
-              </div>
-              <div>
-                <span className="text-muted">Domain:</span> {AUTH0_CONFIG.domain}
-              </div>
-              <div>
-                <span className="text-muted">Client ID:</span> {AUTH0_CONFIG.clientId}
-              </div>
-              <div>
-                <span className="text-muted">Audience:</span> {AUTH0_CONFIG.audience}
-              </div>
-              <div className="sm:col-span-2">
-                <span className="text-muted">Flows:</span> OAuth 2.0 PKCE S256 + Passwordless Email OTP (/passwordless/start) + Partner Voucher
-              </div>
-            </div>
+            </h3>
+            <dl className="mt-3 grid grid-cols-[7rem_minmax(0,1fr)] border-t border-rule text-small">
+              <dt className="border-b border-divider py-2.5 text-fg-muted">Issuer:</dt>
+              <dd className="m-0 break-all border-b border-divider py-2.5">{AUTH0_CONFIG.issuer}</dd>
+              <dt className="border-b border-divider py-2.5 text-fg-muted">Domain:</dt>
+              <dd className="m-0 break-all border-b border-divider py-2.5">{AUTH0_CONFIG.domain}</dd>
+              <dt className="border-b border-divider py-2.5 text-fg-muted">Client ID:</dt>
+              <dd className="m-0 break-all border-b border-divider py-2.5">{AUTH0_CONFIG.clientId}</dd>
+              <dt className="border-b border-divider py-2.5 text-fg-muted">Audience:</dt>
+              <dd className="m-0 break-all border-b border-divider py-2.5">{AUTH0_CONFIG.audience}</dd>
+              <dt className="border-b border-divider py-2.5 text-fg-muted">Flows:</dt>
+              <dd className="m-0 border-b border-divider py-2.5">
+                OAuth 2.0 PKCE S256 + Passwordless Email OTP (/passwordless/start) + Partner Voucher
+              </dd>
+            </dl>
           </div>
         )}
       </Card>
 
       {/* Sektion 3: Funktionen */}
-      <Card className="space-y-4">
+      <Card>
         <SectionTitle hint="Einzeln schaltbar">3. Funktionen ein- oder ausschalten</SectionTitle>
-        <div className="space-y-3">
-          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-line p-3 hover:bg-cream-100">
-            <div>
-              <span className="font-semibold text-ink">Saatgut-Kauf & Händler-Vermittlung</span>
-              <p className="text-xs text-muted">Button „Saatgut anfragen“ auf Sortensteckbriefen</p>
-            </div>
+        <div className="max-w-measure divide-y divide-divider border-t border-rule">
+          <label className={TOGGLE_ROW}>
             <input
               type="checkbox"
               checked={saatgutKauf}
               onChange={(e) => setSaatgutKauf(e.target.checked)}
-              className="mt-1 size-5 rounded text-leaf-600"
+              className={CHECKBOX}
             />
-          </label>
-          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-line p-3 hover:bg-cream-100">
             <div>
-              <span className="font-semibold text-ink">Spross Copilot</span>
-              <p className="text-xs text-muted">Interaktiver Assistent für Sorten- und Anbaufragen</p>
+              <span className="font-semibold text-fg">Saatgut-Kauf & Händler-Vermittlung</span>
+              <p className="text-small text-fg-muted">Button „Saatgut anfragen“ auf Sortensteckbriefen</p>
             </div>
+          </label>
+          <label className={TOGGLE_ROW}>
             <input
               type="checkbox"
               checked={spross}
               onChange={(e) => setSpross(e.target.checked)}
-              className="mt-1 size-5 rounded text-leaf-600"
+              className={CHECKBOX}
             />
-          </label>
-          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-line p-3 hover:bg-cream-100">
             <div>
-              <span className="font-semibold text-ink">Team-Anruf</span>
-              <p className="text-xs text-muted">Rückruf-Anfrage an das NoMaze-Agrar-Team</p>
+              <span className="font-semibold text-fg">Spross Copilot</span>
+              <p className="text-small text-fg-muted">Interaktiver Assistent für Sorten- und Anbaufragen</p>
             </div>
+          </label>
+          <label className={TOGGLE_ROW}>
             <input
               type="checkbox"
               checked={teamAnruf}
               onChange={(e) => setTeamAnruf(e.target.checked)}
-              className="mt-1 size-5 rounded text-leaf-600"
+              className={CHECKBOX}
             />
-          </label>
-          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-line p-3 hover:bg-cream-100">
             <div>
-              <span className="font-semibold text-ink">Sorten-Stöbern (/daten) anzeigen</span>
-              <p className="text-xs text-muted">
-                Öffentlichen Versuchsdaten-Explorer auf der Startseite einblenden
-              </p>
+              <span className="font-semibold text-fg">Team-Anruf</span>
+              <p className="text-small text-fg-muted">Rückruf-Anfrage an das NoMaze-Agrar-Team</p>
             </div>
+          </label>
+          <label className={TOGGLE_ROW}>
             <input
               type="checkbox"
               data-testid="toggle-stoebern"
               checked={stoebern}
               onChange={(e) => setStoebern(e.target.checked)}
-              className="mt-1 size-5 rounded text-leaf-600"
+              className={CHECKBOX}
             />
-          </label>
-          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-line p-3 hover:bg-cream-100">
             <div>
-              <span className="font-semibold text-ink">Anmeldung & Konto-Sicherung anzeigen</span>
-              <p className="text-xs text-muted">
-                Login-Button im Header, Konto-Abfrage nach Feldauswahl und Anmeldelink einblenden
+              <span className="font-semibold text-fg">Sorten-Stöbern (/daten) anzeigen</span>
+              <p className="text-small text-fg-muted">
+                Öffentlichen Versuchsdaten-Explorer auf der Startseite einblenden
               </p>
             </div>
+          </label>
+          <label className={TOGGLE_ROW}>
             <input
               type="checkbox"
               data-testid="toggle-anmeldung"
               checked={anmeldung}
               onChange={(e) => setAnmeldung(e.target.checked)}
-              className="mt-1 size-5 rounded text-leaf-600"
+              className={CHECKBOX}
             />
-          </label>
-          <label className="flex cursor-pointer items-start justify-between gap-4 rounded-xl border border-line p-3 hover:bg-cream-100">
             <div>
-              <span className="font-semibold text-ink">{t.shell.demoBackendStatusTitle}</span>
-              <p className="text-xs text-muted">{t.shell.demoBackendStatusHelp}</p>
+              <span className="font-semibold text-fg">Anmeldung & Konto-Sicherung anzeigen</span>
+              <p className="text-small text-fg-muted">
+                Login-Button im Header, Konto-Abfrage nach Feldauswahl und Anmeldelink einblenden
+              </p>
             </div>
+          </label>
+          <label className={TOGGLE_ROW}>
             <input
               type="checkbox"
               data-testid="toggle-backend-status-badge"
               checked={showBackendStatusBadge}
               onChange={(e) => setShowBackendStatusBadge(e.target.checked)}
-              className="mt-1 size-5 rounded text-leaf-600"
+              className={CHECKBOX}
             />
+            <div>
+              <span className="font-semibold text-fg">{t.shell.demoBackendStatusTitle}</span>
+              <p className="text-small text-fg-muted">{t.shell.demoBackendStatusHelp}</p>
+            </div>
           </label>
         </div>
       </Card>
 
       {/* Sektion 4: Simulationsdatum */}
-      <Card className="space-y-4">
+      <Card>
         <SectionTitle hint="Saison-Zeitpunkt">4. Zeitreise & Wachstumsstadium</SectionTitle>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {UMWELT_PRESETS.map((p) => (
             <button
               key={p.datum}
               type="button"
+              aria-pressed={datum === p.datum}
               onClick={() => setDatum(p.datum)}
-              className={`rounded-xl border p-2.5 text-left text-xs transition ${
-                datum === p.datum ? "border-leaf-600 bg-leaf-50 font-bold" : "border-line bg-white hover:border-leaf-300"
-              }`}
+              className={`${optionClass(datum === p.datum, "p-3")} text-left text-small`}
             >
-              <span className="block font-semibold">{p.label}</span>
-              <span className="text-muted">{p.datum}</span>
+              <span className="block font-semibold text-fg">{p.label}</span>
+              <span className="tabular-nums text-fg-muted">{p.datum}</span>
             </button>
           ))}
         </div>
-        <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">
+        <div className="mt-6 max-w-measure">
+          <label htmlFor="demo-datum" className="mb-1.5 block text-small font-semibold text-fg">
             Individuelles Datum (YYYY-MM-DD)
           </label>
           <input
+            id="demo-datum"
             type="text"
             value={datum}
             onChange={(e) => setDatum(e.target.value)}
-            className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-leaf-600 focus:outline-none max-w-xs"
+            className="h-control w-full max-w-xs rounded-control border border-control bg-surface px-3 text-body tabular-nums text-fg"
           />
         </div>
       </Card>
 
-      <div className="flex items-center justify-between gap-4 pt-2">
+      {/* Sektion 5: Backend-Verbindung & Systemstatus */}
+      <Card>
+        <SectionTitle hint="Live-Diagnose">5. Backend-Verbindung &amp; Systemstatus</SectionTitle>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="text-small font-semibold text-fg">
+              Aktueller Verbindungsstatus zur Agronomie-Engine
+            </div>
+            <p className="text-small text-fg-muted">
+              Prüft live die Verbindung zum Sorten- und Wetter-Backend (Standard im oberen Header ausgeblendet).
+            </p>
+          </div>
+          <div className="rounded-control border border-control bg-canvas px-3 py-1.5">
+            <BackendStatusBadge alwaysShow />
+          </div>
+        </div>
+      </Card>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 border-t border-divider pt-6">
         <Button type="submit" variant="primary">
           Einstellungen übernehmen
         </Button>
         <button
           type="button"
           onClick={handleReset}
-          className={buttonClass("quiet", "sm", "flex items-center gap-1.5")}
+          className={buttonClass("quiet", "sm")}
         >
-          <RotateCcw className="size-4" /> Auf Standard zurücksetzen
+          <RotateCcw className="size-4" aria-hidden /> Auf Standard zurücksetzen
         </button>
       </div>
     </form>

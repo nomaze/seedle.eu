@@ -102,11 +102,13 @@ describe("Passwordless Authentication & Demo User Peter Müller", () => {
       expect(farm?.name).toBe(DEMO_FARM_CONFIG.name);
     });
 
-    it("maintains exactly 3 sample field parcels near Freising with distinct traffic light status values", async () => {
+    it("maintains 7 sample field parcels (~100 ha) within 1–2 km of Freising with distinct traffic light status values", async () => {
       const fields = await listFields(DEMO_USER_ID);
-      expect(fields.length).toBe(3);
+      expect(fields.length).toBe(7);
+      const totalHa = fields.reduce((acc, f) => acc + f.areaHa, 0);
+      expect(totalHa).toBeCloseTo(100.0, 1);
 
-      // All 3 fields belong to the Freising demo farm
+      // All 7 fields belong to the Freising demo farm within a 1–2 km radius
       for (const field of fields) {
         expect(field.farmId).toBe(DEMO_FARM_ID);
         expect(field.userId).toBe(DEMO_USER_ID);

@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 /**
- * Standard page header: back navigation link top-left,
- * contextual eyebrow, title, optional summary lead, and aside action slot.
+ * Standard page header: back link, meta line, title (text-title), optional lead and aside.
+ * Spans the full width; the lead keeps to the reading measure.
  */
 export function PageHeader({
   back,
@@ -20,26 +20,24 @@ export function PageHeader({
   aside?: ReactNode;
 }) {
   return (
-    <header className="mb-6 sm:mb-8">
-      <div className="h-9">
-        {back ? (
-          <Link
-            href={back.href}
-            className="inline-flex h-9 items-center gap-1 rounded-full bg-white/80 pl-2 pr-4 text-sm font-medium text-ink ring-1 ring-line backdrop-blur-sm transition hover:bg-white hover:ring-leaf-300"
-          >
-            <ChevronLeft className="size-4 text-leaf-700" aria-hidden />
-            {back.label}
-          </Link>
-        ) : null}
-      </div>
-      <div className="mt-5 flex flex-wrap items-end justify-between gap-3">
+    <header className="mb-10">
+      {back ? (
+        <Link
+          href={back.href}
+          className="-ml-1 inline-flex min-h-touch items-center gap-1 rounded-control px-1 text-small text-fg-muted transition-colors hover:text-fg"
+        >
+          <ChevronLeft className="size-4" aria-hidden />
+          {back.label}
+        </Link>
+      ) : null}
+      <div className="mt-3 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
         <div className="min-w-0">
-          {eyebrow ? <div className="mb-1.5 text-sm font-medium text-leaf-700">{eyebrow}</div> : null}
-          <h1 className="text-[1.75rem] font-bold leading-tight tracking-tight text-ink sm:text-4xl">{title}</h1>
+          {eyebrow ? <div className="mb-2 text-body text-fg-muted">{eyebrow}</div> : null}
+          <h1 className="text-title text-fg">{title}</h1>
         </div>
-        {aside}
+        {aside ? <div className="flex flex-wrap items-center gap-x-6 gap-y-3">{aside}</div> : null}
       </div>
-      {lead ? <p className="mt-3 max-w-2xl text-base text-muted sm:text-lg">{lead}</p> : null}
+      {lead ? <p className="mt-4 max-w-measure text-lead text-fg-muted">{lead}</p> : null}
     </header>
   );
 }

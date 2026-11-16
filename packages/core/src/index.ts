@@ -9,7 +9,17 @@ export * from "./providers/interfaces";
 export { rankVarieties } from "./engine/ranking";
 export { businessCase, KORNFEUCHTE_BASIS, STAERKE_BASIS } from "./engine/economics";
 export { environmentSimilarity, commonalities } from "./engine/similarity";
-export { autoFieldPolygon, areaHa, centroid, distanceKm } from "./engine/geo";
+export {
+  autoFieldPolygon,
+  areaHa,
+  centroid,
+  distanceKm,
+  hasSelfIntersection,
+  surroundingFieldParcels,
+  findParcelAtPoint,
+  isPointInPolygon,
+} from "./engine/geo";
+export type { FieldParcelBlock } from "./engine/geo";
 export { growthStage, hintsForToday, photoTask, daysBetween } from "./engine/season";
 export { benchmarkStatement } from "./engine/benchmark";
 export { hashString, rng } from "./engine/random";

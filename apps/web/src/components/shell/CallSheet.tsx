@@ -3,6 +3,8 @@
 import { Check, Phone } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { buttonClass } from "@/components/ui/Button";
+import { segmentClass } from "@/components/ui/Choice";
 import { TEAM } from "@/lib/team";
 import { Sheet } from "./Sheet";
 import { useOverlays } from "./Overlays";
@@ -41,11 +43,7 @@ export function CallSheet() {
       offen={offen === "anruf"}
       onClose={schliesse}
       lage="mitte"
-      icon={
-        <span className="flex size-11 items-center justify-center rounded-full bg-leaf-100 text-leaf-800">
-          <Phone className="size-5" />
-        </span>
-      }
+      icon={<Phone className="size-6 shrink-0 text-link" strokeWidth={1.8} aria-hidden />}
       titel={`Sprich mit dem ${TEAM.name}`}
       untertitel="Menschen aus Landwirtschaft und Züchtung"
     >
@@ -53,49 +51,49 @@ export function CallSheet() {
         <div>
           <a
             href={TEAM.telefonLink}
-            className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-leaf-800 text-lg font-semibold text-white shadow-soft hover:bg-leaf-900"
+            className={buttonClass("primary", "md", "w-full tabular-nums")}
           >
-            <Phone className="size-5" /> {TEAM.telefonAnzeige}
+            <Phone className="size-5" aria-hidden /> {TEAM.telefonAnzeige}
           </a>
-          <p className="mt-2 text-center text-sm text-muted">{TEAM.erreichbar}</p>
+          <p className="mt-2 text-center text-small text-fg-muted">{TEAM.erreichbar}</p>
         </div>
 
-        <div className="flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-muted">
-          <span className="h-px flex-1 bg-line" /> oder <span className="h-px flex-1 bg-line" />
+        <div className="flex items-center gap-3 text-small text-fg-muted">
+          <span className="h-px flex-1 bg-divider" /> oder <span className="h-px flex-1 bg-divider" />
         </div>
 
         {status === "fertig" ? (
-          <div className="rounded-2xl bg-leaf-50 p-5 text-center ring-1 ring-leaf-200">
-            <Check className="mx-auto size-8 text-leaf-600" />
-            <p className="mt-2 font-semibold text-ink">Wir rufen dich an: {zeit.toLowerCase()}.</p>
-            <p className="mt-1 text-sm text-muted">Bis gleich!</p>
+          <div className="border-t border-divider pt-5" role="status">
+            <p className="flex items-center gap-2 text-subheading text-fg">
+              <Check className="size-5 shrink-0 text-status-ok" aria-hidden />
+              Wir rufen dich an: {zeit.toLowerCase()}.
+            </p>
+            <p className="mt-1 text-small text-fg-muted">Bis gleich!</p>
           </div>
         ) : (
           <form onSubmit={absenden} className="space-y-4">
-            <div className="font-semibold text-ink">Wir rufen dich zurück</div>
+            <div className="text-subheading text-fg">Wir rufen dich zurück</div>
             <label className="block">
-              <span className="text-sm text-muted">Deine Telefonnummer</span>
+              <span className="text-small font-semibold text-fg">Deine Telefonnummer</span>
               <input
                 type="tel"
                 required
                 value={telefon}
                 onChange={(e) => setTelefon(e.target.value)}
                 placeholder="z. B. 0171 1234567"
-                className="mt-1 h-12 w-full rounded-xl bg-white px-4 text-base ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-500"
+                className="h-control mt-1.5 w-full rounded-control border border-control bg-surface px-4 text-body text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               />
             </label>
             <fieldset>
-              <legend className="text-sm text-muted">Wann passt es dir?</legend>
-              <div className="mt-2 flex flex-wrap gap-2">
+              <legend className="text-small font-semibold text-fg">Wann passt es dir?</legend>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
                 {ZEITFENSTER.map((z) => (
                   <button
                     key={z}
                     type="button"
                     onClick={() => setZeit(z)}
                     aria-pressed={zeit === z}
-                    className={`rounded-full px-3.5 py-2 text-sm font-medium ring-1 transition ${
-                      zeit === z ? "bg-leaf-800 text-white ring-leaf-800" : "bg-white text-ink ring-line hover:ring-leaf-300"
-                    }`}
+                    className={segmentClass(zeit === z, "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus")}
                   >
                     {z}
                   </button>
@@ -103,19 +101,19 @@ export function CallSheet() {
               </div>
             </fieldset>
             <label className="block">
-              <span className="text-sm text-muted">Worum geht es? (freiwillig)</span>
+              <span className="text-small font-semibold text-fg">Worum geht es? (freiwillig)</span>
               <textarea
                 value={anliegen}
                 onChange={(e) => setAnliegen(e.target.value)}
                 rows={2}
-                className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-base ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-500"
+                className="py-3 mt-1.5 w-full rounded-control border border-control bg-surface px-4 text-body text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
               />
             </label>
-            {fehler ? <p className="text-sm text-[#8a2a18]">{fehler}</p> : null}
+            {fehler ? <p className="text-small font-semibold text-status-urgent-text">{fehler}</p> : null}
             <button
               type="submit"
               disabled={status === "sendet"}
-              className="h-12 w-full rounded-full bg-white font-semibold text-leaf-800 ring-1 ring-leaf-300 hover:bg-sand-100 disabled:opacity-50"
+              className={buttonClass("secondary", "md", "w-full")}
             >
               Rückruf anfordern
             </button>

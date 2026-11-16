@@ -1,10 +1,20 @@
 export const DEMO_FIELD_IDS = [
   "f-hinteracker",
   "f-muehlfeld",
+  "f-hangbreite",
   "f-suedhang",
+  "f-bachwiese",
+  "f-feldmark-nord",
+  "f-mosecker-schlag",
+  "f-kreuzbreite",
+  "f-am-holzweg",
   "fld_demo_voetting",
   "fld_demo_weihenstephan",
   "fld_demo_isarau",
+  "fld_demo_feldmark_nord",
+  "fld_demo_mosecker",
+  "fld_demo_kreuzbreite",
+  "fld_demo_holzweg",
 ];
 
 export const DEMO_VARIETY_IDS = [

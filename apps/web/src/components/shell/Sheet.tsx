@@ -43,29 +43,29 @@ export function Sheet({
   if (!offen) return null;
   const desktop =
     lage === "seite"
-      ? "sm:inset-y-3 sm:right-3 sm:left-auto sm:top-3 sm:h-auto sm:w-[420px] sm:rounded-3xl"
-      : "sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[86vh] sm:w-[480px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-3xl";
+      ? "sm:inset-y-3 sm:right-3 sm:left-auto sm:top-3 sm:h-auto sm:w-[420px] sm:rounded-panel"
+      : "sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-auto sm:max-h-[86vh] sm:w-[480px] sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-panel";
 
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true">
-      <button type="button" aria-label="Schließen" onClick={onClose} className="absolute inset-0 bg-ink/25 backdrop-blur-[2px]" />
+      <button type="button" aria-label="Schließen" onClick={onClose} className="absolute inset-0 bg-scrim" />
       <div
         ref={panel}
         tabIndex={-1}
-        className={`absolute inset-x-0 bottom-0 flex h-[88dvh] animate-rise flex-col rounded-t-3xl bg-sand-50 shadow-lift outline-none ${desktop}`}
+        className={`absolute inset-x-0 bottom-0 flex h-[88dvh] flex-col rounded-t-panel bg-surface shadow-lift outline-none motion-safe:animate-rise motion-safe:[animation-duration:180ms] ${desktop}`}
       >
-        <div className="flex items-center gap-3 border-b border-line px-5 py-4">
+        <div className="flex items-center gap-3 border-b border-divider py-3 pl-5 pr-3">
           {icon}
           <div className="min-w-0 flex-1">
-            <div className="text-base font-semibold text-ink">{titel}</div>
-            {untertitel ? <div className="text-xs text-muted">{untertitel}</div> : null}
+            <div className="text-heading text-fg">{titel}</div>
+            {untertitel ? <div className="mt-0.5 text-small text-fg-muted">{untertitel}</div> : null}
           </div>
-          <button type="button" onClick={onClose} aria-label="Schließen" className="flex size-10 items-center justify-center rounded-full text-muted hover:bg-white hover:text-ink">
+          <button type="button" onClick={onClose} aria-label="Schließen" className="flex size-touch shrink-0 items-center justify-center rounded-control text-link transition-colors hover:bg-action-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
             <X className="size-5" />
           </button>
         </div>
         <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
-        {footer ? <div className="border-t border-line bg-white/80 p-3">{footer}</div> : null}
+        {footer ? <div className="border-t border-divider px-5 py-3">{footer}</div> : null}
       </div>
     </div>
   );

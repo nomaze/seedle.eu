@@ -8,12 +8,18 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSpross } from "@/components/spross/SprossContext";
-import { ButtonLink } from "@/components/ui/Button";
-import { Card, SectionTitle } from "@/components/ui/Card";
+import { ButtonLink, buttonClass } from "@/components/ui/Button";
+import { SectionTitle } from "@/components/ui/Card";
+import { KennzahlLeiste } from "@/components/ui/Kennzahl";
 import { num } from "@/lib/format";
 import type { RegionalStats, RegionalTopVariety } from "@/server/services/dmk";
 import { StandortPerformancePanel } from "./StandortPerformancePanel";
 import { VarietyRankingTable, type RankingVarietyItem } from "./VarietyRankingTable";
+import { segmentClass } from "@/components/ui/Choice";
+
+/** Segmented control (design system): rectangular segments side by side, active one in the selected role. */
+const SEGMENT_GROUP = "inline-flex flex-wrap gap-1.5";
+
 
 export interface RegionalSummaryCardProps {
   stats: RegionalStats;
@@ -178,30 +184,27 @@ export function RegionalSummaryCard({
   }));
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <div className={`space-y-10 ${className}`}>
       {/* 1. Usage toggle (silage vs grain) */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-white border border-line p-3 sm:p-4 shadow-sm">
+      <div className="flex flex-col justify-between gap-3 border-y border-divider py-4 sm:flex-row sm:items-center">
         <div>
-          <span className="text-xs font-bold uppercase tracking-wider text-leaf-800">
+          <span className="text-body font-semibold text-fg">
             Nutzungsrichtung
           </span>
-          <p className="text-xs text-muted mt-0.5">
+          <p className="mt-0.5 text-small text-fg-muted">
             Getrennte Versuchsreihen & Reifezahlen für {region.name}
           </p>
         </div>
 
-        <div className="inline-flex rounded-xl bg-sand-100 p-1 ring-1 ring-line self-start sm:self-auto">
+        <div className={`${SEGMENT_GROUP} self-start sm:self-auto`}>
           <button
             type="button"
             onClick={() => {
               setNutzung("silo");
               setShowAll(false);
             }}
-            className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition cursor-pointer ${
-              nutzung === "silo"
-                ? "bg-leaf-700 text-white shadow-sm"
-                : "text-ink hover:text-leaf-800 hover:bg-sand-200/60"
-            }`}
+            aria-pressed={nutzung === "silo"}
+            className={segmentClass(nutzung === "silo")}
           >
             Silomais (GTM)
           </button>
@@ -211,19 +214,16 @@ export function RegionalSummaryCard({
               setNutzung("koerner");
               setShowAll(false);
             }}
-            className={`px-3.5 py-1.5 text-xs sm:text-sm font-bold rounded-lg transition cursor-pointer ${
-              nutzung === "koerner"
-                ? "bg-leaf-700 text-white shadow-sm"
-                : "text-ink hover:text-leaf-800 hover:bg-sand-200/60"
-            }`}
+            aria-pressed={nutzung === "koerner"}
+            className={segmentClass(nutzung === "koerner")}
           >
             Körnermais
           </button>
         </div>
       </div>
 
-      {/* 2. Regional stats tiles */}
-      <Card>
+      {/* 2. Regional key figures */}
+      <section>
         <SectionTitle
           hint={`${totals.min_jahr}–${totals.max_jahr} · ${totals.datenpunkte.toLocaleString(
             "de-DE",
@@ -232,35 +232,35 @@ export function RegionalSummaryCard({
           Regionales Sorten-Ranking & Versuchsbasis für {region.name} ({region.region_code})
         </SectionTitle>
 
-        <p className="text-sm text-muted mb-4 leading-relaxed">
+        <p className="mb-5 max-w-measure text-small text-fg-muted">
           {region.boden_klima_beschreibung}
         </p>
 
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <KennzahlLeiste>
           {/* Regional reference baseline */}
           {nutzung === "silo" ? (
-            <div className="rounded-xl bg-leaf-50/70 p-3.5 ring-1 ring-leaf-200">
-              <div className="text-xs font-semibold text-leaf-800 uppercase tracking-wider">
+            <div>
+              <div className="text-small text-fg-muted">
                 LSV-Basis Silomais
               </div>
-              <div className="mt-1 text-2xl font-bold text-ink font-mono tabular-nums">
+              <div className="mt-1 text-figure-m tabular-nums text-fg">
                 100 % Referenz
               </div>
-              <div className="mt-0.5 text-xs text-muted">
+              <div className="mt-1 text-caption tabular-nums text-fg-muted">
                 {averages.silomais.messungen_gtm > 0
                   ? `${averages.silomais.messungen_gtm.toLocaleString("de-DE")} Wägungen`
                   : "Keine Siloversuche"}
               </div>
             </div>
           ) : (
-            <div className="rounded-xl bg-leaf-50/70 p-3.5 ring-1 ring-leaf-200">
-              <div className="text-xs font-semibold text-leaf-800 uppercase tracking-wider">
+            <div>
+              <div className="text-small text-fg-muted">
                 LSV-Basis Körnermais
               </div>
-              <div className="mt-1 text-2xl font-bold text-ink font-mono tabular-nums">
+              <div className="mt-1 text-figure-m tabular-nums text-fg">
                 100 % Referenz
               </div>
-              <div className="mt-0.5 text-xs text-muted">
+              <div className="mt-1 text-caption tabular-nums text-fg-muted">
                 {averages.koernermais.messungen_ke > 0
                   ? `${averages.koernermais.messungen_ke.toLocaleString("de-DE")} Wägungen`
                   : "Keine Kornversuche"}
@@ -270,122 +270,117 @@ export function RegionalSummaryCard({
 
           {/* Dry matter content */}
           {nutzung === "silo" ? (
-            <div className="rounded-xl bg-leaf-50/70 p-3.5 ring-1 ring-leaf-200">
-              <div className="text-xs font-semibold text-leaf-800 uppercase tracking-wider">
+            <div>
+              <div className="text-small text-fg-muted">
                 Ø TS-Gehalt Silo
               </div>
-              <div className="mt-1 text-2xl font-bold text-ink font-mono tabular-nums">
+              <div className="mt-1 text-figure-m tabular-nums text-fg">
                 {averages.silomais.avg_tsg_prozent != null
                   ? `${num(averages.silomais.avg_tsg_prozent)} %`
                   : "—"}
               </div>
-              <div className="mt-0.5 text-xs text-muted">Reife bei Ernte</div>
+              <div className="mt-1 text-caption text-fg-muted">Reife bei Ernte</div>
             </div>
           ) : (
-            <div className="rounded-xl bg-leaf-50/70 p-3.5 ring-1 ring-leaf-200">
-              <div className="text-xs font-semibold text-leaf-800 uppercase tracking-wider">
+            <div>
+              <div className="text-small text-fg-muted">
                 Ø Korn-TS
               </div>
-              <div className="mt-1 text-2xl font-bold text-ink font-mono tabular-nums">
+              <div className="mt-1 text-figure-m tabular-nums text-fg">
                 {averages.koernermais.avg_tsg_prozent != null
                   ? `${num(averages.koernermais.avg_tsg_prozent)} %`
                   : "—"}
               </div>
-              <div className="mt-0.5 text-xs text-muted">Erntefeuchte standardisiert</div>
+              <div className="mt-1 text-caption text-fg-muted">Erntefeuchte standardisiert</div>
             </div>
           )}
 
           {/* Trial locations */}
-          <div className="rounded-xl bg-sand-100/70 p-3.5 ring-1 ring-sand-300">
-            <div className="text-xs font-semibold text-muted uppercase tracking-wider">
+          <div>
+            <div className="text-small text-fg-muted">
               Standorte (LSV)
             </div>
-            <div className="mt-1 text-2xl font-bold text-ink font-mono tabular-nums">
+            <div className="mt-1 text-figure-m tabular-nums text-fg">
               bis zu {totals.max_standorte}
             </div>
-            <div className="mt-0.5 text-xs text-muted">
+            <div className="mt-1 text-caption tabular-nums text-fg-muted">
               {totals.summe_standortmessungen.toLocaleString("de-DE")} Messungen gesamt
             </div>
           </div>
 
           {/* Varieties in dataset */}
-          <div className="rounded-xl bg-sand-100/70 p-3.5 ring-1 ring-sand-300">
-            <div className="text-xs font-semibold text-muted uppercase tracking-wider">
+          <div>
+            <div className="text-small text-fg-muted">
               Geprüfte Sorten
             </div>
-            <div className="mt-1 text-2xl font-bold text-ink font-mono tabular-nums">
+            <div className="mt-1 text-figure-m tabular-nums text-fg">
               {sourceVarieties.length}
             </div>
-            <div className="mt-0.5 text-xs text-muted">
+            <div className="mt-1 text-caption text-fg-muted">
               in {nutzung === "silo" ? "Silomais" : "Körnermais"}
             </div>
           </div>
-        </div>
-      </Card>
+        </KennzahlLeiste>
+      </section>
 
-      {/* 3. Maturity group pill filters */}
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        <span className="text-xs font-semibold text-muted mr-1">Reifegruppe:</span>
-        {[
-          { id: "alle", label: "Alle Reifegruppen", count: countAlle },
-          {
-            id: "frueh",
-            label: nutzung === "silo" ? "Früh (bis S 220)" : "Früh (bis K 220)",
-            count: countFrueh,
-          },
-          {
-            id: "mittelfrueh",
-            label: nutzung === "silo" ? "Mittelfrüh (S 230–250)" : "Mittelfrüh (K 230–250)",
-            count: countMittelfrueh,
-          },
-          {
-            id: "spaet",
-            label: nutzung === "silo" ? "Mittelspät / Spät (ab S 260)" : "Mittelspät / Spät (ab K 260)",
-            count: countSpaet,
-          },
-        ].map((pill) => (
-          <button
-            key={pill.id}
-            type="button"
-            onClick={() => {
-              setReifegruppe(pill.id as "alle" | "frueh" | "mittelfrueh" | "spaet");
-              setShowAll(false);
-            }}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition cursor-pointer ${
-              reifegruppe === pill.id
-                ? "bg-leaf-700 text-white shadow-sm ring-1 ring-leaf-800"
-                : "bg-white text-ink hover:bg-sand-100 ring-1 ring-line"
-            }`}
-          >
-            <span>{pill.label}</span>
-            <span
-              className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono tabular-nums ${
-                reifegruppe === pill.id ? "bg-white/20 text-white" : "bg-sand-200 text-muted"
-              }`}
+      {/* 3. Maturity group filter (segmented control) */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="text-small font-semibold text-fg">Reifegruppe:</span>
+        <div className={SEGMENT_GROUP}>
+          {[
+            { id: "alle", label: "Alle Reifegruppen", count: countAlle },
+            {
+              id: "frueh",
+              label: nutzung === "silo" ? "Früh (bis S 220)" : "Früh (bis K 220)",
+              count: countFrueh,
+            },
+            {
+              id: "mittelfrueh",
+              label: nutzung === "silo" ? "Mittelfrüh (S 230–250)" : "Mittelfrüh (K 230–250)",
+              count: countMittelfrueh,
+            },
+            {
+              id: "spaet",
+              label: nutzung === "silo" ? "Mittelspät / Spät (ab S 260)" : "Mittelspät / Spät (ab K 260)",
+              count: countSpaet,
+            },
+          ].map((pill) => (
+            <button
+              key={pill.id}
+              type="button"
+              onClick={() => {
+                setReifegruppe(pill.id as "alle" | "frueh" | "mittelfrueh" | "spaet");
+                setShowAll(false);
+              }}
+              aria-pressed={reifegruppe === pill.id}
+              className={`inline-flex items-center gap-1.5 ${segmentClass(reifegruppe === pill.id)}`}
             >
-              {pill.count}
-            </span>
-          </button>
-        ))}
+              <span>{pill.label}</span>
+              <span
+                className={`font-normal tabular-nums ${
+                  reifegruppe === pill.id ? "opacity-80" : "text-fg-muted"
+                }`}
+              >
+                {pill.count}
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* 4. Main grid: 2-column layout on desktop (table left, sticky panel right) */}
-      <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-start">
+      <div className="items-start lg:grid lg:grid-cols-12 lg:gap-x-12">
         {/* Left column: Results table */}
-        <div className="lg:col-span-8 min-w-0 space-y-4">
-          <Card>
-            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-4">
-              <div>
-                <SectionTitle hint={`${filteredVarieties.length} Sorten im Vergleich`}>
-                  Top-geprüfte {nutzung === "silo" ? "Silomaissorten" : "Körnermaissorten"} in{" "}
-                  {region.name}
-                </SectionTitle>
-                <p className="text-xs text-muted mt-1">
-                  Sortiert nach Relativertrag (%) zur amtlichen Bezugsbasis · Tippe auf eine Zeile,
-                  um den Standort-Check zu aktualisieren
-                </p>
-              </div>
-            </div>
+        <div className="min-w-0 space-y-10 lg:col-span-8">
+          <section>
+            <SectionTitle hint={`${filteredVarieties.length} Sorten im Vergleich`}>
+              Top-geprüfte {nutzung === "silo" ? "Silomaissorten" : "Körnermaissorten"} in{" "}
+              {region.name}
+            </SectionTitle>
+            <p className="-mt-2 mb-4 max-w-measure text-small text-fg-muted">
+              Sortiert nach Relativertrag (%) zur amtlichen Bezugsbasis · Tippe auf eine Zeile,
+              um den Standort-Check zu aktualisieren
+            </p>
 
             <VarietyRankingTable
               varieties={tableVarieties}
@@ -408,43 +403,43 @@ export function RegionalSummaryCard({
 
             {/* Show all varieties toggle */}
             {filteredVarieties.length > 15 && (
-              <div className="mt-4 pt-4 border-t border-line flex justify-center">
+              <div className="mt-2 border-t border-divider pt-3">
                 <button
                   type="button"
                   onClick={() => setShowAll((prev) => !prev)}
-                  className="inline-flex items-center gap-2 rounded-full bg-sand-100 hover:bg-sand-200 text-ink px-4 py-2 text-xs font-semibold ring-1 ring-line transition cursor-pointer"
+                  className={buttonClass("quiet", "sm", "-ml-4 cursor-pointer")}
                 >
                   {showAll ? (
                     <>
                       <span>Auf Top 15 reduzieren</span>
-                      <ChevronUp className="size-3.5 text-muted" />
+                      <ChevronUp className="size-4" aria-hidden />
                     </>
                   ) : (
                     <>
                       <span>
                         Alle {filteredVarieties.length} geprüften {nutzung === "silo" ? "Silomaissorten" : "Körnermaissorten"} anzeigen
                       </span>
-                      <ChevronDown className="size-3.5 text-muted" />
+                      <ChevronDown className="size-4" aria-hidden />
                     </>
                   )}
                 </button>
               </div>
             )}
-          </Card>
+          </section>
 
           {/* Bridge to full variety catalog */}
           {onOpenKatalog && (
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-2xl bg-sand-100/70 p-4 ring-1 ring-line text-xs">
-              <div className="text-muted max-w-xl leading-relaxed">
+            <div className="flex flex-col gap-3 border-t border-divider pt-5 sm:flex-row sm:items-center sm:justify-between">
+              <p className="max-w-measure text-small text-fg-muted">
                 Suchst du eine ganz bestimmte Sorte aus einem anderen Anbaugebiet oder möchtest gezielt nach
                 Züchter (AckerWerk, Feldmark, Bergland etc.) filtern?
-              </div>
+              </p>
               <button
                 type="button"
                 onClick={onOpenKatalog}
-                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-white px-3.5 py-1.5 font-semibold text-leaf-700 ring-1 ring-line hover:bg-leaf-50 shadow-sm transition whitespace-nowrap cursor-pointer"
+                className={buttonClass("secondary", "sm", "shrink-0 self-start whitespace-nowrap cursor-pointer sm:self-auto")}
               >
-                <Search className="size-3.5" />
+                <Search className="size-4" aria-hidden />
                 Alle 715 Sorten durchsuchen →
               </button>
             </div>
@@ -452,7 +447,7 @@ export function RegionalSummaryCard({
         </div>
 
         {/* Right column: Desktop sticky performance panel */}
-        <div className="hidden lg:block lg:col-span-4 sticky top-6 self-start">
+        <div className="sticky top-6 hidden self-start lg:col-span-4 lg:block">
           <StandortPerformancePanel
             variety={selectedVariety}
             rang={selectedRang}
@@ -470,20 +465,20 @@ export function RegionalSummaryCard({
         <div className="lg:hidden">
           {/* Collapsed bottom bar */}
           {!mobileDrawerOpen && (
-            <div className="fixed inset-x-0 bottom-16 sm:bottom-0 z-30 px-3 pb-2 pt-1 pointer-events-none">
-              <div className="pointer-events-auto mx-auto max-w-md rounded-2xl bg-white/95 backdrop-blur-md border border-line shadow-lift p-2.5 flex items-center justify-between gap-2">
+            <div className="pointer-events-none fixed inset-x-0 bottom-16 z-30 px-3 pb-2 pt-1 sm:bottom-0">
+              <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-2 rounded-panel border border-control bg-surface p-2.5 shadow-lift">
                 <div
                   onClick={() => setMobileDrawerOpen(true)}
-                  className="flex items-center gap-2 min-w-0 flex-1 cursor-pointer"
+                  className="flex min-w-0 flex-1 cursor-pointer items-center gap-2"
                 >
-                  <span className="rounded-md bg-leaf-100 px-1.5 py-0.5 text-xs font-bold font-mono text-leaf-800 tabular-nums shrink-0">
+                  <span className="shrink-0 text-figure-s tabular-nums text-fg-muted">
                     #{selectedRang}
                   </span>
                   <div className="min-w-0 truncate">
-                    <span className="font-bold text-ink text-xs truncate block">
+                    <span className="block truncate text-small font-bold text-fg">
                       {selectedVariety.sorte}
                     </span>
-                    <span className="text-[10px] text-muted truncate block">
+                    <span className="block truncate text-caption tabular-nums text-fg-muted">
                       {selectedVariety.avg_rel_ertrag != null
                         ? `${num(selectedVariety.avg_rel_ertrag)} % rel.`
                         : "LSV-geprüft"}
@@ -492,14 +487,14 @@ export function RegionalSummaryCard({
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1.5 shrink-0">
+                <div className="flex shrink-0 items-center gap-1.5">
                   <ButtonLink
                     href={`/feld?sorte=${selectedVariety.sorte_id}`}
                     variant="primary"
                     size="sm"
-                    className="px-2.5 py-1 text-xs font-bold shadow-sm whitespace-nowrap"
+                    className="whitespace-nowrap px-3"
                   >
-                    <MapPin className="size-3" />
+                    <MapPin className="size-4" aria-hidden />
                     Schlag-Check
                   </ButtonLink>
 
@@ -507,9 +502,9 @@ export function RegionalSummaryCard({
                     type="button"
                     onClick={() => setMobileDrawerOpen(true)}
                     aria-label="Standort-Details aufklappen"
-                    className="flex size-8 items-center justify-center rounded-full bg-sand-100 text-leaf-800 ring-1 ring-line hover:bg-sand-200 cursor-pointer transition"
+                    className="flex size-10 cursor-pointer items-center justify-center rounded-control text-link transition-colors hover:bg-action-subtle"
                   >
-                    <ChevronUp className="size-4" />
+                    <ChevronUp className="size-5" aria-hidden />
                   </button>
                 </div>
               </div>
@@ -518,22 +513,22 @@ export function RegionalSummaryCard({
 
           {/* Expanded drawer modal */}
           {mobileDrawerOpen && (
-            <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4 bg-ink/40 backdrop-blur-xs animate-fade-in">
+            <div className="fixed inset-0 z-50 flex items-end bg-scrim p-0 sm:items-center sm:justify-center sm:p-4">
               <div
                 className="fixed inset-0"
                 onClick={() => setMobileDrawerOpen(false)}
               />
-              <div className="relative z-10 w-full max-w-lg max-h-[85vh] overflow-y-auto rounded-t-3xl sm:rounded-2xl bg-white shadow-lift border border-line p-4 space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-line">
-                  <span className="text-xs font-bold uppercase tracking-wider text-leaf-700">
+              <div className="relative z-10 max-h-[85vh] w-full max-w-lg space-y-3 overflow-y-auto rounded-t-panel border border-control bg-surface p-4 shadow-lift sm:rounded-panel sm:p-5">
+                <div className="flex items-center justify-between pb-1">
+                  <span className="text-subheading text-fg">
                     Standort-Performance
                   </span>
                   <button
                     type="button"
                     onClick={() => setMobileDrawerOpen(false)}
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-muted hover:text-ink rounded-full px-2.5 py-1 bg-sand-100 cursor-pointer transition"
+                    className={buttonClass("quiet", "sm", "-mr-2 cursor-pointer")}
                   >
-                    <ChevronDown className="size-3.5" />
+                    <ChevronDown className="size-4" aria-hidden />
                     <span>Einklappen</span>
                   </button>
                 </div>

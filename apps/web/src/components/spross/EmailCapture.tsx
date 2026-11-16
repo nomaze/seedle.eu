@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useDemo } from "@/components/shell/DemoContext";
+import { buttonClass } from "@/components/ui/Button";
 import { SprossAvatar } from "./SprossAvatar";
 
 /**
@@ -38,33 +39,36 @@ export function EmailCapture() {
   }
 
   return (
-    <div className="mb-6 flex animate-rise items-start gap-3">
-      <SprossAvatar size={44} mood={zustand === "fertig" ? "freut" : "ruhig"} className="mt-1 shrink-0" />
-      <div className="flex-1 rounded-2xl rounded-tl-md bg-white/95 p-4 shadow-soft ring-1 ring-leaf-200">
+    <div className="mb-8 flex items-start gap-4 border-y border-divider py-6">
+      <SprossAvatar size={44} mood={zustand === "fertig" ? "freut" : "ruhig"} className="shrink-0" />
+      <div className="min-w-0 max-w-measure flex-1">
         {zustand === "fertig" ? (
           <>
-            <p className="font-medium">Danke! Dein Ranking ist gespeichert.</p>
-            <p className="mt-1 text-sm text-muted">
+            <p className="text-subheading text-fg">Danke! Dein Ranking ist gespeichert.</p>
+            <p className="mt-1 text-fg-muted">
               Wir haben dir einen Code an {email} geschickt. Damit meldest du dich auf jedem Gerät an.
             </p>
-            {devCode ? <p className="mt-2 text-xs text-muted">Demo ohne Mailversand: Dein Code ist {devCode}.</p> : null}
+            {devCode ? <p className="mt-2 text-caption text-fg-muted">Demo ohne Mailversand: Dein Code ist {devCode}.</p> : null}
           </>
         ) : zustand === "bekannt" ? (
           <>
-            <p className="font-medium">Diese E-Mail kennen wir schon.</p>
-            <p className="mt-1 text-sm text-muted">
+            <p className="text-subheading text-fg">Diese E-Mail kennen wir schon.</p>
+            <p className="mt-1 text-fg-muted">
               Melde dich mit dem Code aus der Mail an, dann siehst du alle deine Felder.{" "}
-              <Link href={`/anmelden?email=${encodeURIComponent(email)}`} className="font-semibold text-leaf-700 hover:underline">
+              <Link
+                href={`/anmelden?email=${encodeURIComponent(email)}`}
+                className="font-semibold text-link underline decoration-link/40 underline-offset-4 hover:decoration-link"
+              >
                 Code eingeben
               </Link>
             </p>
-            {devCode ? <p className="mt-2 text-xs text-muted">Demo ohne Mailversand: Dein Code ist {devCode}.</p> : null}
+            {devCode ? <p className="mt-2 text-caption text-fg-muted">Demo ohne Mailversand: Dein Code ist {devCode}.</p> : null}
           </>
         ) : (
           <form onSubmit={senden}>
-            <p className="font-medium">Soll ich dir das Ranking schicken?</p>
-            <p className="mt-0.5 text-sm text-muted">Dann findest du es jederzeit wieder, auch auf dem Handy. Nur deine E-Mail, sonst nichts.</p>
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <p className="text-subheading text-fg">Soll ich dir das Ranking schicken?</p>
+            <p className="mt-1 text-fg-muted">Dann findest du es jederzeit wieder, auch auf dem Handy. Nur deine E-Mail, sonst nichts.</p>
+            <div className="mt-4 flex flex-col gap-2 sm:flex-row">
               <input
                 type="email"
                 required
@@ -72,14 +76,14 @@ export function EmailCapture() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="deine@email.de"
                 aria-label="E-Mail-Adresse"
-                className="h-11 w-full min-w-0 rounded-full bg-white px-4 text-base ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-400 sm:flex-1"
+                className="h-control w-full min-w-0 rounded-control border border-control bg-surface px-3 text-body text-fg placeholder:text-fg-muted sm:flex-1"
               />
-              <button type="submit" disabled={zustand === "sendet"} className="h-11 rounded-full bg-leaf-600 px-5 text-sm font-semibold text-white disabled:opacity-50">
+              <button type="submit" disabled={zustand === "sendet"} className={buttonClass("primary")}>
                 Schicken
               </button>
             </div>
-            {fehler ? <p className="mt-2 text-sm text-[#8a2a18]">{fehler}</p> : null}
-            <button type="button" onClick={() => setZustand("spaeter")} className="mt-2 text-xs font-medium text-muted hover:text-ink">
+            {fehler ? <p className="mt-2 text-small font-semibold text-status-urgent-text">{fehler}</p> : null}
+            <button type="button" onClick={() => setZustand("spaeter")} className={buttonClass("quiet", "sm", "mt-2 -ml-4")}>
               Später
             </button>
           </form>

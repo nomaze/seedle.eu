@@ -60,7 +60,7 @@ async function Ranking({
   const standardVariety = providers().catalog.regionalStandard(field.env, safeUsage) ?? providers().catalog.varieties()[0]!;
 
   return (
-    <>
+    <div>
       <PageHeader
         back={{ href: `/feld/${field.id}/anbau`, label: "Anbau" }}
         eyebrow={`Schritt 3 von 3 · ${field.name}`}
@@ -75,6 +75,6 @@ async function Ranking({
         sortierung={sortierung}
         standardVarietyId={standardVariety.id}
       />
-    </>
+    </div>
   );
 }

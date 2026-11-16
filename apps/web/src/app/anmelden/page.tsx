@@ -23,8 +23,10 @@ function AnmeldenContent() {
         title="Willkommen bei Seedle"
         lead="Interaktive Vorschau ohne Passwort und ohne Datenspeicherung."
       />
-      <Card className="max-w-lg">
-        <LoginForm />
+      <Card className="pt-8">
+        <div className="max-w-measure">
+          <LoginForm />
+        </div>
       </Card>
     </>
   );

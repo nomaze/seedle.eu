@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useLayoutEffect } from "react";
 import { getActiveAccessToken } from "@/lib/auth-config";
 import {
   FAKE_REGIONS,
@@ -321,17 +322,37 @@ if (typeof window !== "undefined") {
   ensureWindowFetchIntercepted();
 }
 
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 /**
  * Intercepts client-side fetch calls to /api/v1/* in browser environments,
  * automatically attaching Authorization: Bearer <token> if present,
- * and serving mock data for static GitHub Pages and standalone development.
+ * serving mock data for static GitHub Pages and standalone development,
+ * and resetting scroll position to the top on every route change.
  */
 export function ClientApiInterceptors() {
+  const pathname = usePathname();
   ensureWindowFetchIntercepted();
 
   useEffect(() => {
     ensureWindowFetchIntercepted();
   }, []);
+
+  useIsomorphicLayoutEffect(() => {
+    if (typeof window === "undefined" || typeof document === "undefined") return;
+    if (window.location.hash && window.location.hash.length > 1) return;
+    try {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    } catch {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   return null;
 }

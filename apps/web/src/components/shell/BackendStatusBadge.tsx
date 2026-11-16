@@ -8,20 +8,28 @@ import { checkBackendHealth, type BackendHealthResponse } from "@/lib/backendCli
 
 export interface BackendStatusBadgeProps {
   initialHealth?: BackendHealthResponse | null;
+  alwaysShow?: boolean;
 }
 
 /**
- * Top navigation status badge displaying backend connectivity state.
+ * Top navigation or demo-footer status badge displaying backend connectivity state.
+ * Renders a clean status dot (green/red) without visible text clutter in the header.
  * Links directly to /demo settings so testers and farmers can toggle or inspect it.
  */
-export function BackendStatusBadge({ initialHealth }: BackendStatusBadgeProps = {}) {
+export function BackendStatusBadge({
+  initialHealth,
+  alwaysShow = false,
+}: BackendStatusBadgeProps = {}) {
   const { showBackendStatusBadge } = useDemo();
+  const shouldRender = alwaysShow || showBackendStatusBadge;
   const { t, locale } = useLanguage();
-  const [isOnline, setIsOnline] = useState<boolean>(Boolean(initialHealth && initialHealth.status === "healthy"));
+  const [isOnline, setIsOnline] = useState<boolean>(
+    Boolean(initialHealth && initialHealth.status === "healthy"),
+  );
   const [health, setHealth] = useState<BackendHealthResponse | null>(initialHealth ?? null);
 
   useEffect(() => {
-    if (!showBackendStatusBadge) {
+    if (!shouldRender) {
       return;
     }
 
@@ -40,41 +48,38 @@ export function BackendStatusBadge({ initialHealth }: BackendStatusBadgeProps = 
     return () => {
       isMounted = false;
     };
-  }, [showBackendStatusBadge]);
+  }, [shouldRender]);
 
-  if (!showBackendStatusBadge) {
+  if (!shouldRender) {
     return null;
   }
 
   const isConnected = isOnline && health?.status === "healthy";
-  const fullLabel = isConnected ? t.brandBar.backendConnected : t.brandBar.backendOffline;
-  const mobileLabel = isConnected
-    ? locale === "de"
-      ? "Verbunden"
-      : "Online"
+  const disconnectedLabelDe =
+    "Kein Backend verbunden · Klickdummy zeigt aktuell Demo- und Schätzwerte";
+  const disconnectedLabelEn = "Offline mode (no backend) · Showing demo estimates";
+  const label = isConnected
+    ? t.brandBar.backendConnected
     : locale === "de"
-      ? "Test-Modus"
-      : "Offline";
+      ? disconnectedLabelDe
+      : disconnectedLabelEn;
 
   return (
     <Link
       href="/demo"
       data-testid="backend-status-badge"
-      title={fullLabel}
-      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 sm:px-2.5 sm:py-1 text-[11px] sm:text-xs font-medium transition shadow-soft focus-visible:outline-2 focus-visible:outline-leaf-500 ${
-        isConnected
-          ? "bg-leaf-50 text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100"
-          : "bg-bee-soft text-bee-text ring-1 ring-bee/20 hover:bg-bee-soft/80"
-      }`}
+      title={label}
+      aria-label={label}
+      className="inline-flex min-h-touch shrink-0 items-center justify-center rounded-control p-1 transition-opacity hover:opacity-80"
     >
       <span
         aria-hidden="true"
-        className={`size-2 rounded-full shrink-0 ${
-          isConnected ? "bg-status-ok animate-pulse" : "bg-bee"
+        data-testid={isConnected ? undefined : "backend-disconnected-red-alert"}
+        className={`size-2.5 shrink-0 rounded-full ${
+          isConnected ? "bg-status-ok" : "bg-[#e05a47]"
         }`}
       />
-      <span className="hidden sm:inline">{fullLabel}</span>
-      <span className="sm:hidden">{mobileLabel}</span>
+      <span className="sr-only">{label}</span>
     </Link>
   );
 }

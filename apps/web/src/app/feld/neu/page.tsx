@@ -24,7 +24,7 @@ async function NeuesFeld() {
         back={{ href: "/", label: "Startseite" }}
         eyebrow="Schritt 1 von 3"
         title="Wo liegt dein Feld?"
-        lead="Such deinen Ort und tipp auf dein Feld. Die Feldgrenze legen wir automatisch an; du kannst sie danach anpassen."
+        lead="Such deinen Ort und tipp auf dein Feld. Wir erkennen die echte Schlaggrenze aus den amtlichen Geodaten und du kannst sie danach anpassen."
       />
       <FieldPicker mode="neu" />
     </>

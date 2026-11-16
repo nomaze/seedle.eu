@@ -1,9 +1,46 @@
 "use client";
 
-import { LogOut, UserRound } from "lucide-react";
+import type React from "react";
+import { LogOut } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "./AuthContext";
 import { useLanguage } from "./LanguageContext";
+
+/** Plain text navigation link in the header (no pills, no icons), visible across all viewport sizes. */
+const navLink =
+  "inline-flex min-h-touch shrink-0 items-center whitespace-nowrap text-[0.9375rem] font-medium text-fg";
+
+export function AboutUsLink(): React.JSX.Element {
+  const { t } = useLanguage();
+  return (
+    <Link href="/ueber-uns" data-spross-target="about-us-link" className={navLink}>
+      <span suppressHydrationWarning>{t.brandBar.aboutUs}</span>
+    </Link>
+  );
+}
+
+export function WhyWeDoThisLink(): React.JSX.Element {
+  const { t } = useLanguage();
+  return (
+    <Link href="/warum-wir-das-machen" data-spross-target="why-we-do-this-link" className={navLink}>
+      <span suppressHydrationWarning>{t.brandBar.whyWeDoThis}</span>
+    </Link>
+  );
+}
+
+export function MyFarmNavLink(): React.JSX.Element {
+  const { t } = useLanguage();
+  return (
+    <Link
+      href="/hof"
+      data-testid="header-mein-hof-link"
+      data-spross-target="hof-link"
+      className="inline-flex min-h-touch shrink-0 items-center whitespace-nowrap text-[0.9375rem] font-semibold text-link"
+    >
+      <span suppressHydrationWarning>{t.brandBar.farm}</span>
+    </Link>
+  );
+}
 
 export function AuthButton({ verified }: { verified: boolean }) {
   const { t } = useLanguage();
@@ -14,23 +51,22 @@ export function AuthButton({ verified }: { verified: boolean }) {
 
   if (isUserLoggedIn) {
     return (
-      <div className="relative inline-flex items-center">
+      <div className="ml-auto inline-flex shrink-0 items-center gap-1">
         <Link
           href="/hof"
-          className="inline-flex h-9 sm:h-10 items-center gap-1.5 sm:gap-2 rounded-full bg-leaf-50/80 px-3 sm:px-4 text-xs sm:text-sm font-medium text-leaf-900 ring-1 ring-leaf-300 transition hover:bg-leaf-100/80 hover:ring-leaf-400"
+          className="inline-flex min-h-touch items-center gap-2 text-[0.9375rem] font-semibold text-link"
           title={auth.user?.email ? `${displayName} (${auth.user.email})` : displayName}
         >
-          <UserRound className="size-3.5 sm:size-4 text-leaf-700" aria-hidden />
-          <span suppressHydrationWarning className="max-w-[120px] truncate sm:max-w-[180px]">
+          <span suppressHydrationWarning className="max-w-[140px] truncate sm:max-w-[200px]">
             {displayName}
           </span>
           {auth.user?.modus === "fake" && (
-            <span className="hidden sm:inline-block rounded bg-leaf-200/70 px-1.5 py-0.2 text-[10px] font-semibold text-leaf-800">
+            <span className="hidden text-caption font-semibold text-fg-muted sm:inline">
               Demo
             </span>
           )}
           {auth.user?.modus === "auth0" && (
-            <span className="hidden sm:inline-block rounded bg-leaf-700 px-1.5 py-0.2 text-[10px] font-semibold text-white">
+            <span className="hidden text-caption font-semibold text-fg-muted sm:inline">
               Auth0
             </span>
           )}
@@ -40,9 +76,9 @@ export function AuthButton({ verified }: { verified: boolean }) {
           onClick={() => auth.logout()}
           aria-label="Abmelden"
           title="Abmelden"
-          className="ml-1 inline-flex size-8 sm:size-9 items-center justify-center rounded-full text-muted hover:bg-cream-100 hover:text-ink transition"
+          className="inline-flex size-touch items-center justify-center rounded-control text-fg-muted"
         >
-          <LogOut className="size-3.5 sm:size-4" />
+          <LogOut className="size-4" aria-hidden />
         </button>
       </div>
     );
@@ -51,9 +87,8 @@ export function AuthButton({ verified }: { verified: boolean }) {
   return (
     <Link
       href="/anmelden"
-      className="inline-flex h-9 sm:h-10 items-center gap-1.5 sm:gap-2 rounded-full bg-white px-3 sm:px-4 text-xs sm:text-sm font-medium text-ink ring-1 ring-line transition hover:ring-leaf-300"
+      className="ml-auto inline-flex min-h-touch shrink-0 items-center text-[0.9375rem] font-semibold text-link"
     >
-      <UserRound className="size-3.5 sm:size-4 text-leaf-700" aria-hidden />
       <span suppressHydrationWarning>{t.brandBar.login}</span>
     </Link>
   );

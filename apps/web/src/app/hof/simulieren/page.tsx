@@ -1,4 +1,4 @@
-import { CloudRain, Compass, Dna, LineChart, Sparkles, SunMedium } from "lucide-react";
+import { CloudRain, Compass, Dna, LineChart, SunMedium } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
@@ -49,80 +49,69 @@ async function HofSimulieren() {
         aside={<Badge tone="sand">Konzept / In Entwicklung</Badge>}
       />
 
-      <div className="space-y-6">
-        {/* Main concept card */}
-        <Card className="border-2 border-leaf-300 bg-gradient-to-br from-leaf-50/70 via-white to-sand-50 p-6 sm:p-8">
-          <div className="flex items-start gap-4">
-            <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-leaf-700 text-white shadow-soft">
-              <Sparkles className="size-6" />
-            </div>
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-leaf-800">
-                  Ganzheitliche Betriebsoptimierung
-                </span>
-                <span className="inline-flex items-center rounded-full bg-status-action-soft px-2.5 py-0.5 text-xs font-semibold text-status-action-text ring-1 ring-status-action-border">
-                  Vorschau
-                </span>
-              </div>
-              <h2 className="text-xl sm:text-2xl font-bold text-leaf-950 leading-tight">
-                Der Hof unter verschiedenen Klimaszenarien für das nächste Jahr, mit jedem Schlag optimal gewählt und bewirtschaftet.
-              </h2>
-              <p className="text-muted leading-relaxed">
-                Wahrscheinliche Preise und eine Monte-Carlo-Simulation kommen später. Hier entsteht das Werkzeug, mit dem du das Risiko deines gesamten Betriebs über alle Schläge und Sorten hinweg steuerst.
-              </p>
-            </div>
+      <div className="space-y-section">
+        {/* Main statement */}
+        <Card>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="text-body text-fg-muted">Ganzheitliche Betriebsoptimierung</span>
+            <Badge tone="status-action">Vorschau</Badge>
           </div>
+          <h2 className="mt-3 max-w-measure text-heading text-fg">
+            Der Hof unter verschiedenen Klimaszenarien für das nächste Jahr, mit jedem Schlag optimal gewählt und bewirtschaftet.
+          </h2>
+          <p className="mt-4 max-w-measure text-body text-fg-muted">
+            Wahrscheinliche Preise und eine Monte-Carlo-Simulation kommen später. Hier entsteht das Werkzeug, mit dem du das Risiko deines gesamten Betriebs über alle Schläge und Sorten hinweg steuerst.
+          </p>
         </Card>
 
         {/* Three pillars of farm simulation */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-x-10 gap-y-section md:grid-cols-3">
           <Card className="flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 text-status-problem">
-                <SunMedium className="size-5 shrink-0" />
-                <span className="font-semibold text-sm text-ink">3 Klimaszenarien</span>
+              <div className="flex items-center gap-2">
+                <SunMedium className="size-5 shrink-0 text-sunshine" aria-hidden />
+                <span className="text-small font-semibold text-fg">3 Klimaszenarien</span>
               </div>
-              <h3 className="mt-2 font-bold text-base">Wetter-Stresstest 2027</h3>
-              <p className="mt-1 text-sm text-muted">
+              <h3 className="mt-2 text-subheading text-fg">Wetter-Stresstest 2027</h3>
+              <p className="mt-1 text-body text-fg-muted">
                 Trocken-heiß, normal oder feucht-kühl: Wie verhält sich dein Gesamtertrag, wenn der Sommer 2027 extrem trocken oder nass wird?
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-line text-xs text-muted flex items-center gap-1.5">
-              <CloudRain className="size-4 text-leaf-600" />
+            <div className="mt-4 flex items-center gap-1.5 border-t border-divider pt-3 text-small text-fg-muted">
+              <CloudRain className="size-4 text-rain" aria-hidden />
               <span>G×E Prediction NoMaze</span>
             </div>
           </Card>
 
           <Card className="flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 text-status-action">
-                <Dna className="size-5 shrink-0" />
-                <span className="font-semibold text-sm text-ink">Sorten-Portfolio</span>
+              <div className="flex items-center gap-2">
+                <Dna className="size-5 shrink-0 text-link" aria-hidden />
+                <span className="text-small font-semibold text-fg">Sorten-Portfolio</span>
               </div>
-              <h3 className="mt-2 font-bold text-base">Schlagübergreifender Mix</h3>
-              <p className="mt-1 text-sm text-muted">
+              <h3 className="mt-2 text-subheading text-fg">Schlagübergreifender Mix</h3>
+              <p className="mt-1 text-body text-fg-muted">
                 Jeder Schlag bekommt die Genetik, die zu seinem Boden passt. Risikostreuung über Reifegruppen hinweg statt Monokultur.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-line text-xs text-muted flex items-center gap-1.5">
-              <Compass className="size-4 text-leaf-600" />
+            <div className="mt-4 flex items-center gap-1.5 border-t border-divider pt-3 text-small text-fg-muted">
+              <Compass className="size-4 text-link" aria-hidden />
               <span>{felder.length} Schläge im Betrieb</span>
             </div>
           </Card>
 
-          <Card className="flex flex-col justify-between bg-sand-50/50">
+          <Card className="flex flex-col justify-between">
             <div>
-              <div className="flex items-center gap-2 text-muted">
-                <LineChart className="size-5 shrink-0" />
-                <span className="font-semibold text-sm text-ink">Monte-Carlo & Preise</span>
+              <div className="flex items-center gap-2">
+                <LineChart className="size-5 shrink-0 text-link" aria-hidden />
+                <span className="text-small font-semibold text-fg">Monte-Carlo & Preise</span>
               </div>
-              <h3 className="mt-2 font-bold text-base">Stochastische Absicherung</h3>
-              <p className="mt-1 text-sm text-muted">
+              <h3 className="mt-2 text-subheading text-fg">Stochastische Absicherung</h3>
+              <p className="mt-1 text-body text-fg-muted">
                 10.000 simulierte Ernte- und Preisverläufe (Erzeugerpreise, Trocknungskosten, Saatgut) zur Absicherung des Deckungsbeitrags.
               </p>
             </div>
-            <div className="mt-4 pt-3 border-t border-line text-xs text-muted font-medium">
+            <div className="mt-4 border-t border-divider pt-3 text-small font-medium text-fg-muted">
               Kommt in Version 2.0
             </div>
           </Card>
@@ -130,41 +119,41 @@ async function HofSimulieren() {
 
         {/* Farm parcels in simulation */}
         <Card>
-          <div className="flex items-center justify-between pb-3 border-b border-line">
-            <SectionTitle>Deine Schläge in der Simulation</SectionTitle>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-sand-100 text-ink">
-                {felder.length} Schläge · {num(totalHa)} ha
-              </span>
-            </div>
-          </div>
+          <SectionTitle hint={<span className="tabular-nums">{felder.length} Schläge · {num(totalHa)} ha</span>}>
+            Deine Schläge in der Simulation
+          </SectionTitle>
 
           {felder.length === 0 ? (
-            <div className="py-6 text-center text-sm text-muted">
+            <div className="border-t border-rule py-6 text-fg-muted">
               <p>Noch keine Schläge angelegt.</p>
               <ButtonLink href="/feld/neu" variant="secondary" size="sm" className="mt-3">
                 Ersten Schlag anlegen
               </ButtonLink>
             </div>
           ) : (
-            <ul className="divide-y divide-line mt-2">
+            <ul className="border-t border-rule">
               {felder.map((f) => {
                 const sName = f.selectedVarietyId ? sorten.get(f.selectedVarietyId) : undefined;
                 return (
-                  <li key={f.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                  <li
+                    key={f.id}
+                    className={`flex flex-wrap items-center justify-between gap-3 border-b border-divider py-3.5 ${
+                      f.status === "status-urgent" ? "-mx-3 bg-status-urgent-soft px-3" : ""
+                    }`}
+                  >
                     <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-ink">{f.name}</span>
+                      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                        <span className="font-semibold text-fg">{f.name}</span>
                         <FieldStatusBadge status={f.status} />
                       </div>
-                      <div className="text-xs text-muted">
+                      <div className="text-small text-fg-muted">
                         {num(f.areaHa)} ha · {f.env?.region ?? "Region"} · {f.crop === "mais" ? "Mais" : (f.crop || "Mais")}
                         {sName ? ` · Sorte: ${sName}` : " · noch keine Sorte gewählt"}
                       </div>
                     </div>
                     <Link
                       href={`/feld/${f.id}`}
-                      className="text-xs font-semibold text-leaf-700 hover:underline"
+                      className="inline-flex min-h-touch items-center text-small font-semibold text-link hover:underline"
                     >
                       Schlag ansehen →
                     </Link>
@@ -176,12 +165,12 @@ async function HofSimulieren() {
         </Card>
 
         {/* Team contact / Spross */}
-        <Card className="bg-sand-50/70 border-dashed">
+        <Card>
           <SectionTitle>Möchtest du die Simulation vorab mitgestalten?</SectionTitle>
-          <p className="text-sm text-muted leading-relaxed">
+          <p className="max-w-measure text-body text-fg-muted">
             Wir entwickeln das Simulationsmodell gemeinsam mit innovativen Landwirten. Erzähle Spross von deinen Anforderungen oder sprich direkt mit unserem Agrar-Team.
           </p>
-          <div className="mt-4 flex flex-wrap gap-3 items-center">
+          <div className="mt-4 flex flex-wrap items-center gap-3">
             <AskSprossButton
               frage="Ich möchte mehr über die Hof-Simulation und Monte-Carlo-Szenarien erfahren."
               className={buttonClass("secondary", "sm")}

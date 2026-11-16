@@ -60,39 +60,37 @@ export function PhotoUpload({ fieldId, anleitung }: { fieldId: string; anleitung
   }
 
   return (
-    <div className="space-y-4">
-      <label className="flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-card border-2 border-dashed border-leaf-300 bg-white/85 text-center transition hover:bg-leaf-50">
+    <div className="max-w-measure space-y-6">
+      <label className="flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-panel border-2 border-dashed border-control bg-surface text-center transition-colors hover:bg-highlight">
         {vorschau ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={vorschau} alt="Vorschau" className="max-h-80 w-full object-cover" />
         ) : (
           <span className="flex flex-col items-center gap-2 px-6 py-12">
-            <span className="flex size-16 items-center justify-center rounded-full bg-leaf-50 text-leaf-700">
-              <Camera className="size-7" />
-            </span>
-            <span className="text-lg font-semibold">Foto machen oder auswählen</span>
-            <span className="max-w-sm text-sm text-muted">{anleitung}</span>
+            <Camera className="size-8 text-link" strokeWidth={1.8} aria-hidden />
+            <span className="text-subheading text-fg">Foto machen oder auswählen</span>
+            <span className="max-w-sm text-small text-fg-muted">{anleitung}</span>
           </span>
         )}
         <input type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => waehle(e.target.files?.[0])} />
       </label>
 
       {datei && !befund ? (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <label className="block">
-            <span className="text-sm text-muted">Was siehst du? (freiwillig)</span>
+            <span className="block text-body font-semibold text-fg">Was siehst du? (freiwillig)</span>
             <textarea
               value={notiz}
               onChange={(e) => setNotiz(e.target.value)}
               rows={2}
               placeholder="z. B. Flecken an den unteren Blättern"
-              className="mt-1 w-full rounded-xl bg-white px-4 py-3 text-base ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-400"
+              className="mt-2 w-full rounded-control border border-control bg-surface px-3 py-2.5 text-body text-fg"
             />
           </label>
-          {fehler ? <p className="text-sm text-[#8a2a18]">{fehler}</p> : null}
-          <div className="flex flex-wrap gap-2">
+          {fehler ? <p className="text-small font-semibold text-status-urgent-text">{fehler}</p> : null}
+          <div className="flex flex-wrap gap-3">
             <Button onClick={hochladen} disabled={busy}>
-              <ImagePlus className="size-5" /> {busy ? "Wird angeschaut …" : "Foto auswerten"}
+              <ImagePlus className="size-5" aria-hidden /> {busy ? "Wird angeschaut …" : "Foto auswerten"}
             </Button>
             <Button variant="quiet" onClick={nochEins}>
               Anderes Foto
@@ -102,24 +100,24 @@ export function PhotoUpload({ fieldId, anleitung }: { fieldId: string; anleitung
       ) : null}
 
       {befund ? (
-        <section className="animate-rise rounded-card bg-white/95 p-5 shadow-soft ring-1 ring-line">
-          <div className="flex flex-wrap items-center gap-2">
+        <section className="border-t border-divider pt-6">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <Badge tone={TON[befund.kategorie]}>{LABEL[befund.kategorie]}</Badge>
-            <span className="text-xs text-muted">
+            <span className="text-caption text-fg-muted tabular-nums">
               {Math.round(befund.sicherheit * 100)} % sicher{befund.demo ? " · Demo-Auswertung" : ""}
             </span>
           </div>
-          <h2 className="mt-2 text-xl font-semibold">{befund.titel}</h2>
-          <p className="mt-1 text-muted">{befund.text}</p>
-          <p className="mt-3 flex gap-2 font-medium">
-            <Check className="mt-0.5 size-5 shrink-0 text-leaf-600" /> {befund.empfehlung}
+          <h2 className="mt-2 text-heading text-fg">{befund.titel}</h2>
+          <p className="mt-2 text-body text-fg-muted">{befund.text}</p>
+          <p className="mt-4 flex gap-2 font-semibold text-fg">
+            <Check className="mt-0.5 size-5 shrink-0 text-link" aria-hidden /> {befund.empfehlung}
           </p>
           {befund.kategorie === "handeln" && teamAnruf ? (
             <button type="button" onClick={() => oeffne("anruf")} className={`${buttonClass("primary", "sm")} mt-4`}>
-              <Phone className="size-4" /> NoMaze-Team anrufen
+              <Phone className="size-4" aria-hidden /> NoMaze-Team anrufen
             </button>
           ) : null}
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-line pt-4">
+          <div className="mt-6 flex flex-wrap gap-3 border-t border-divider pt-4">
             <Button variant="secondary" size="sm" onClick={nochEins}>
               Noch ein Foto
             </Button>

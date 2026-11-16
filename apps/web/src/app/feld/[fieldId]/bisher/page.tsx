@@ -27,15 +27,21 @@ async function Bisher({ params }: { params: Promise<{ fieldId: string }> }) {
     .filter((v) => !field.usage || v.usages.includes(field.usage as "koernermais" | "silomais"))
     .map((v) => ({ id: v.id, name: v.name, zuechter: zuechter.get(v.breederId) ?? "", reifezahl: v.reifezahl }));
 
+  const initialCrop = field.usage === "koernermais" ? "koernermais" : "silomais";
+
   return (
     <>
       <PageHeader
         back={{ href: `/feld/${field.id}/anbau`, label: "Anbau" }}
         eyebrow="Fast geschafft"
-        title="Welche Maissorte stand zuletzt auf dem Feld?"
-        lead="Dann vergleichen wir die Empfehlung direkt mit deiner Sorte, über die letzten fünf Jahre."
+        title="Was hast du bisher auf dem Feld angebaut?"
+        lead="Wähle zuerst die Kultur (mit der Anzahl unserer bekannten Sorten) und danach deine bisherige Sorte für den direkten 5-Jahres-Vergleich."
       />
-      <PreviousVarietyPicker fieldId={field.id} optionen={optionen} />
+      <PreviousVarietyPicker
+        fieldId={field.id}
+        optionen={optionen}
+        initialCrop={initialCrop}
+      />
     </>
   );
 }

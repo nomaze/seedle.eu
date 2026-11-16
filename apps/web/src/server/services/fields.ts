@@ -157,7 +157,7 @@ export interface FieldPatch {
   name?: string;
   geometry?: Polygon;
   crop?: "mais";
-  usage?: Usage;
+  usage?: Usage | "biogas";
   status?: FieldStatus;
   farmId?: string | null;
   previousVarietyId?: string | null;
@@ -177,9 +177,27 @@ export async function updateField(userId: string, fieldId: string, patch: FieldP
   const existing = inMemoryStore.getField(userId, fieldId);
   if (!existing) return null;
 
+  let nextLat = existing.lat;
+  let nextLon = existing.lon;
+  let nextAreaHa = existing.areaHa;
+  if (patch.geometry) {
+    const c = centroid(patch.geometry);
+    if (Number.isFinite(c.lat) && Number.isFinite(c.lon)) {
+      nextLat = c.lat;
+      nextLon = c.lon;
+    }
+    const calcHa = areaHa(patch.geometry);
+    if (Number.isFinite(calcHa) && calcHa > 0) {
+      nextAreaHa = round1(calcHa);
+    }
+  }
+
   const updated: FieldRow = {
     ...existing,
     ...(patch.name !== undefined ? { name: patch.name } : {}),
+    ...(patch.geometry !== undefined
+      ? { geometry: patch.geometry, lat: nextLat, lon: nextLon, areaHa: nextAreaHa }
+      : {}),
     ...(patch.crop !== undefined ? { crop: patch.crop } : {}),
     ...(patch.usage !== undefined ? { usage: patch.usage } : {}),
     ...(patch.status !== undefined ? { status: patch.status } : {}),
@@ -192,6 +210,19 @@ export async function updateField(userId: string, fieldId: string, patch: FieldP
   };
 
   inMemoryStore.setField(updated);
+
+  if (patch.usage !== undefined || patch.geometry !== undefined) {
+    const existingYear = await getFieldYear(fieldId, updated.saison || config.planungssaison);
+    await setFieldYear(fieldId, updated.saison || config.planungssaison, {
+      crop: (updated.crop as "mais") ?? "mais",
+      usage: (updated.usage as "silomais" | "koernermais" | "biogas" | null) ?? null,
+      varietyId: existingYear?.varietyId ?? updated.selectedVarietyId ?? null,
+      varietyText: existingYear?.varietyText ?? null,
+      status: existingYear?.status ?? (updated.selectedVarietyId ? "gewaehlt" : "geplant"),
+      areaHa: updated.areaHa,
+    });
+  }
+
   return updated;
 }
 

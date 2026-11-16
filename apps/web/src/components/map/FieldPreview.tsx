@@ -4,7 +4,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { centroid } from "@seedle/core/geo";
 import { useEffect, useRef } from "react";
 import { loadMaplibre } from "./loadMaplibre";
-import { feldFarbe, LUFTBILD } from "./styles";
+import { attachMapErrorShield, feldFarbe, LUFTBILD } from "./styles";
 
 type Polygon = { type: "Polygon"; coordinates: [number, number][][] };
 
@@ -25,14 +25,17 @@ export function FieldPreview({ geometry, className = "" }: { geometry: Polygon; 
         center: [c.lon, c.lat],
         zoom: 14.6,
         interactive: false,
+        canvasContextAttributes: { preserveDrawingBuffer: true },
         attributionControl: { compact: true },
       });
       map = m;
-      m.on("load", () => {
+      const attachPreviewLayers = () => {
+        if (m.getSource("feld")) return;
         m.addSource("feld", { type: "geojson", data: { type: "Feature", properties: {}, geometry } });
         m.addLayer({ id: "f", type: "fill", source: "feld", paint: { "fill-color": feldFarbe().fill, "fill-opacity": 0.3 } });
         m.addLayer({ id: "l", type: "line", source: "feld", paint: { "line-color": feldFarbe().line, "line-width": 3 } });
-        const ring = geometry.coordinates[0]!;
+        const ring = geometry.coordinates[0] ?? [];
+        if (ring.length < 3) return;
         const lons = ring.map((p) => p[0]);
         const lats = ring.map((p) => p[1]);
         m.fitBounds(
@@ -42,7 +45,14 @@ export function FieldPreview({ geometry, className = "" }: { geometry: Polygon; 
           ],
           { padding: 40, duration: 0 },
         );
-      });
+      };
+      attachMapErrorShield(m);
+      try {
+        m.getCanvas()?.setAttribute("tabindex", "-1");
+      } catch {
+        // Ignore in headless test mocks
+      }
+      m.on("load", attachPreviewLayers);
     })();
     return () => {
       cancelled = true;
@@ -50,5 +60,5 @@ export function FieldPreview({ geometry, className = "" }: { geometry: Polygon; 
     };
   }, [geometry]);
 
-  return <div ref={container} className={`overflow-hidden rounded-card bg-sand-200 ring-1 ring-line ${className}`} />;
+  return <div ref={container} className={`overflow-hidden rounded-panel border border-control bg-data-track ${className}`} />;
 }

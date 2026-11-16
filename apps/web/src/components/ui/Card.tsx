@@ -1,20 +1,23 @@
 import type { ComponentProps, ReactNode } from "react";
 
-/** Card container surface with subtle translucency and backdrop blur. */
+/**
+ * Flat page section (design system "Abschnitt"): a divider on top and section spacing,
+ * no background, no radius, no shadow. The name stays `Card` so existing pages keep working.
+ */
 export function Card({ children, className = "", ...props }: ComponentProps<"section">) {
   return (
-    <section className={`rounded-card bg-white/88 p-5 shadow-soft ring-1 ring-line backdrop-blur-sm sm:p-6 ${className}`} {...props}>
+    <section className={`border-t border-divider pt-6 ${className}`} {...props}>
       {children}
     </section>
   );
 }
 
-/** Section heading component with optional trailing hint. */
+/** Section heading (text-heading), optional hint or quiet action on the right. */
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h2 className="text-lg font-semibold text-ink">{children}</h2>
-      {hint ? <span className="text-sm text-muted">{hint}</span> : null}
+    <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+      <h2 className="text-heading text-fg">{children}</h2>
+      {hint ? <span className="text-small text-fg-muted">{hint}</span> : null}
     </div>
   );
 }

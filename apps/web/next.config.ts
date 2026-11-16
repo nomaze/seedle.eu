@@ -9,7 +9,7 @@ export const SECURITY_HEADERS = [
   {
     key: "Content-Security-Policy",
     value:
-      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+      "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' http://localhost:8010 http://127.0.0.1:8010 https:; worker-src 'self' blob:; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
   },
   {
     key: "Strict-Transport-Security",

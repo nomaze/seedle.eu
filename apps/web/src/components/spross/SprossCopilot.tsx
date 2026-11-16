@@ -30,6 +30,7 @@ import { getDictionary, type Locale } from "@/lib/i18n";
 import { useDemo } from "../shell/DemoContext";
 import { useLanguage } from "../shell/LanguageContext";
 import { useOverlays } from "../shell/Overlays";
+import { buttonClass } from "../ui/Button";
 import { SprossAvatar } from "./SprossAvatar";
 import {
   useSpross,
@@ -369,6 +370,18 @@ export function getSprossProactiveContent({
   );
 }
 
+/*
+ * Building blocks of the Spross overlay (design system): rectangular actions with radius-control,
+ * outlined in the action or control role, never pills; flat content on surface inside the panel.
+ */
+const AKTION = "inline-flex h-control-sm items-center gap-1.5 rounded-control px-3 text-small font-semibold transition-colors";
+const AKTION_KLEIN = "inline-flex h-8 items-center gap-1 rounded-control px-2.5 text-caption font-semibold transition-colors";
+const EINGABE =
+  "flex items-center gap-2 rounded-control border border-control bg-surface pl-3 pr-1 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-focus";
+const SENDEN =
+  "flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-control bg-action text-fg-inverse transition-colors hover:bg-action-hover disabled:pointer-events-none disabled:opacity-30";
+const FEHLER = "border-l-4 border-status-urgent py-1 pl-3 text-small font-semibold text-status-urgent-text";
+
 export function SprossCopilot() {
   const pathname = usePathname();
   const router = useRouter();
@@ -577,6 +590,14 @@ export function SprossCopilot() {
 
   if (!spross) return null;
 
+  const statusPunkt = (groesse: string) => (
+    <span
+      className={`absolute -bottom-0.5 -right-0.5 ${groesse} rounded-full ring-2 ring-surface ${
+        denkt ? "bg-status-problem" : "bg-status-ok"
+      }`}
+    />
+  );
+
   return (
     <>
       {/* ========================================================================= */}
@@ -585,7 +606,7 @@ export function SprossCopilot() {
       {isScrolledPast && !isChatOpen && !isMinimized && (
         <div
           aria-label="Spross Live HUD"
-          className="fixed top-[13px] right-[21px] z-40 hidden lg:flex items-center gap-[13px] rounded-[21px] border border-leaf-300/90 bg-white/95 px-[13px] py-[8px] shadow-lift backdrop-blur-md animate-fade-in max-w-md"
+          className="print-hide fixed top-3 right-5 z-40 hidden max-w-md items-center gap-3 rounded-panel border border-divider bg-surface px-3 py-2 shadow-lift lg:flex"
         >
           <button
             type="button"
@@ -593,25 +614,24 @@ export function SprossCopilot() {
               window.scrollTo({ top: 0, behavior: "smooth" });
               setIsChatOpen(true);
             }}
-            className="relative flex size-9 shrink-0 items-center justify-center rounded-full bg-leaf-50 ring-1 ring-leaf-200 cursor-pointer"
+            aria-label={t.spross.ask}
+            className="relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-full"
           >
-            <SprossAvatar size={26} mood={denkt ? "denkt" : mood} />
-            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-white" />
+            <SprossAvatar size={30} mood={denkt ? "denkt" : mood} />
+            {statusPunkt("size-2.5")}
           </button>
 
           <div className="min-w-0 flex-1 text-left">
-            <div className="flex items-center gap-[8px]">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-leaf-700 truncate">
-                {stepLabel}
-              </span>
+            <div className="flex items-center gap-2 text-caption text-fg-muted">
+              <span className="truncate font-semibold">{stepLabel}</span>
               {knownFactsSummary.length > 0 && (
-                <span className="rounded-full bg-leaf-100 px-1.5 py-0.2 text-[9px] font-semibold text-leaf-800">
-                  {knownFactsSummary.length}{" "}
+                <span className="shrink-0 tabular-nums">
+                  · {knownFactsSummary.length}{" "}
                   {locale === "en" ? "facts" : "Fakten"}
                 </span>
               )}
             </div>
-            <p className="text-xs font-medium text-ink truncate">
+            <p className="truncate text-small text-fg">
               {focusedHint ||
                 (activeVariety
                   ? `${activeVariety}: ${breederImpulse ?? nextBestAction}`
@@ -619,12 +639,12 @@ export function SprossCopilot() {
             </p>
           </div>
 
-          <div className="flex items-center gap-[8px] shrink-0">
+          <div className="flex shrink-0 items-center gap-2">
             {proactiveChips[0] && (
               <button
                 type="button"
                 onClick={() => handleChipClick(proactiveChips[0]!)}
-                className="rounded-full bg-leaf-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-leaf-700 transition cursor-pointer"
+                className={`${AKTION_KLEIN} cursor-pointer bg-action text-fg-inverse hover:bg-action-hover`}
               >
                 {proactiveChips[0].label}
               </button>
@@ -636,7 +656,7 @@ export function SprossCopilot() {
                 setIsChatOpen(true);
                 focusInput();
               }}
-              className="rounded-full bg-sand-100 px-2.5 py-1 text-[11px] font-semibold text-ink ring-1 ring-line hover:bg-leaf-50 transition cursor-pointer"
+              className={`${AKTION_KLEIN} cursor-pointer text-link ring-1 ring-inset ring-control hover:bg-action-subtle`}
             >
               {locale === "en" ? "Ask →" : "Fragen →"}
             </button>
@@ -646,68 +666,59 @@ export function SprossCopilot() {
 
       {/* ========================================================================= */}
       {/* 1. DESKTOP: Spross panel (>= 1024px)                                      */}
-      {/* Golden ratio: max-h-[61.8vh], Fibonacci spacing (8/13/21/34px)            */}
+      {/* Overlay on surface with shadow-lift, max-h 61.8vh, flat content inside.   */}
       {/* Input row anchored at bottom (follows conversation downward)               */}
       {/* ========================================================================= */}
       {isMinimized ? (
         <aside
           aria-label="Spross KI-Copilot"
-          className="fixed top-[13px] right-[21px] z-40 hidden lg:block"
+          className="spross-bereich fixed top-3 right-5 z-40 hidden lg:block"
         >
           <button
             type="button"
             onClick={() => setIsMinimized(false)}
-            className="group flex items-center gap-[13px] rounded-full border border-leaf-200/90 bg-white/95 px-[13px] py-[8px] shadow-lift backdrop-blur-md transition hover:-translate-y-0.5 hover:ring-2 hover:ring-leaf-400 cursor-pointer"
+            className="group flex cursor-pointer items-center gap-3 rounded-panel border border-divider bg-surface px-3 py-2 shadow-lift transition-colors hover:bg-highlight"
           >
-            <span className="relative flex size-8 items-center justify-center rounded-full bg-leaf-50 ring-1 ring-leaf-200">
-              <SprossAvatar size={26} mood={denkt ? "denkt" : mood} />
-              <span className="absolute -bottom-0.5 -right-0.5 size-2 rounded-full bg-emerald-500 ring-2 ring-white" />
+            <span className="relative flex size-8 items-center justify-center rounded-full">
+              <SprossAvatar size={28} mood={denkt ? "denkt" : mood} />
+              {statusPunkt("size-2")}
             </span>
             <div className="text-left">
-              <span className="block text-xs font-bold leading-tight text-ink">
+              <span className="block text-small font-semibold leading-tight text-fg">
                 {t.spross.ask}
               </span>
-              <span className="block text-[10px] leading-tight text-muted">
+              <span className="block text-caption leading-tight text-fg-muted">
                 {denkt ? t.spross.thinking : stepLabel}
               </span>
             </div>
-            <ChevronDown className="size-4 text-muted transition group-hover:text-ink" />
+            <ChevronDown className="size-4 text-fg-muted transition-colors group-hover:text-fg" aria-hidden />
           </button>
         </aside>
       ) : (
         <aside
           aria-label="Spross KI-Copilot"
-          className="spross-bereich fixed top-0 right-0 z-40 hidden w-[420px] max-h-[61.8vh] lg:flex lg:flex-col"
+          className="spross-bereich fixed top-0 right-0 z-40 hidden max-h-[61.8vh] w-[420px] rounded-bl-panel border-b border-l border-divider bg-surface shadow-lift lg:flex lg:flex-col"
           data-offen={isChatOpen || isMemoryOpen ? "true" : "false"}
         >
-          {/* Architectural shell with golden ratio corner curves */}
-          <div className="spross-rahmen" aria-hidden="true">
-            <div className="spross-flaeche" />
-          </div>
-
-          {/* Flex container: upper context zone (~38.2%) + scrollable chat (~61.8%) + bottom input */}
-          <div className="relative z-10 flex flex-col max-h-[61.8vh] min-h-0 px-[21px] pt-[13px] pb-[13px] gap-[13px]">
+          {/* Flex container: header + context zone + scrollable chat + bottom input */}
+          <div className="flex max-h-[61.8vh] min-h-0 flex-col gap-4 px-5 py-4">
             {/* 1. Header (shrink-0) */}
-            <div className="shrink-0 flex items-center justify-between pb-[8px] border-b border-leaf-200/50">
-              <div className="flex items-center gap-[8px]">
-                <div className="relative flex size-8 items-center justify-center rounded-full bg-white shadow-soft ring-1 ring-leaf-200">
-                  <SprossAvatar size={26} mood={denkt ? "denkt" : mood} />
-                  <span
-                    className={`absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-white ${
-                      denkt ? "bg-amber-400 animate-ping" : "bg-emerald-500"
-                    }`}
-                  />
+            <div className="flex shrink-0 items-center justify-between border-b border-divider pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="relative flex size-8 items-center justify-center rounded-full">
+                  <SprossAvatar size={28} mood={denkt ? "denkt" : mood} />
+                  {statusPunkt("size-2")}
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold leading-none text-ink">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-small font-bold leading-none text-fg">
                       Spross
                     </span>
-                    <span suppressHydrationWarning className="rounded-full bg-leaf-100 px-2 py-0.5 text-[10px] font-semibold text-leaf-800">
+                    <span suppressHydrationWarning className="text-caption font-semibold text-fg-muted">
                       {t.spross.copilot}
                     </span>
                   </div>
-                  <span suppressHydrationWarning className="text-[10px] leading-none text-muted">
+                  <span suppressHydrationWarning className="text-caption text-fg-muted">
                     {denkt
                       ? t.spross.analyzing
                       : !hydriert || !conversation
@@ -724,15 +735,16 @@ export function SprossCopilot() {
                 <button
                   type="button"
                   onClick={toggleMemory}
+                  aria-pressed={isMemoryOpen}
                   title={
                     locale === "en"
                       ? "Open Farm & Breeder Knowledge"
                       : "Hof- & Züchterwissen öffnen"
                   }
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold transition cursor-pointer ${
+                  className={`${AKTION_KLEIN} cursor-pointer ${
                     isMemoryOpen
-                      ? "bg-leaf-700 text-white"
-                      : "bg-white/90 text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100"
+                      ? "bg-selected text-on-selected"
+                      : "text-link ring-1 ring-inset ring-control hover:bg-action-subtle"
                   }`}
                 >
                   <span>
@@ -750,6 +762,7 @@ export function SprossCopilot() {
                   <button
                     type="button"
                     onClick={toggleChat}
+                    aria-pressed={isChatOpen}
                     title={
                       isChatOpen
                         ? locale === "en"
@@ -759,18 +772,18 @@ export function SprossCopilot() {
                           ? "View history"
                           : "Verlauf ansehen"
                     }
-                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold transition cursor-pointer ${
+                    className={`${AKTION_KLEIN} cursor-pointer tabular-nums ${
                       isChatOpen
-                        ? "bg-leaf-600 text-white"
-                        : "bg-white/90 text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100"
+                        ? "bg-selected text-on-selected"
+                        : "text-link ring-1 ring-inset ring-control hover:bg-action-subtle"
                     }`}
                   >
-                    <MessageSquare className="size-3" />
+                    <MessageSquare className="size-3.5" aria-hidden />
                     <span>{messageCount}</span>
                     {isChatOpen ? (
-                      <ChevronUp className="size-3" />
+                      <ChevronUp className="size-3.5" aria-hidden />
                     ) : (
-                      <ChevronDown className="size-3" />
+                      <ChevronDown className="size-3.5" aria-hidden />
                     )}
                   </button>
                 )}
@@ -778,18 +791,19 @@ export function SprossCopilot() {
                   type="button"
                   onClick={() => setIsMinimized(true)}
                   title={locale === "en" ? "Minimize" : "Minimieren"}
-                  className="flex size-7 items-center justify-center rounded-lg text-muted hover:bg-leaf-100/60 hover:text-ink transition cursor-pointer"
+                  aria-label={locale === "en" ? "Minimize" : "Minimieren"}
+                  className="flex size-8 cursor-pointer items-center justify-center rounded-control text-fg-muted transition-colors hover:bg-action-subtle hover:text-fg"
                 >
-                  <Minus className="size-4" />
+                  <Minus className="size-4" aria-hidden />
                 </button>
               </div>
             </div>
 
-            {/* Optional farm & breeder knowledge panel (shrink-0) */}
+            {/* Optional farm & breeder knowledge (shrink-0), flat between hairlines */}
             {isMemoryOpen && (
-              <div className="shrink-0 rounded-[13px] border border-leaf-300 bg-white/95 p-[13px] text-xs shadow-soft space-y-[8px] animate-rise">
-                <div className="flex items-center justify-between border-b border-line pb-[8px]">
-                  <span className="font-bold text-leaf-800">
+              <div className="shrink-0 space-y-3 border-b border-divider pb-4 text-small">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-semibold text-fg">
                     {locale === "en"
                       ? "Farm Memory & Breeder Knowledge"
                       : "Hofwissen & Züchterprofil"}
@@ -802,59 +816,56 @@ export function SprossCopilot() {
                         ? "Reset chat history (keeps learned facts)"
                         : "Chat-Verlauf zurücksetzen (behält Hofwissen)"
                     }
-                    className="inline-flex items-center gap-1 rounded-full bg-sand-100 px-2 py-0.5 text-[10px] font-semibold text-muted hover:text-ink transition cursor-pointer"
+                    className={`${AKTION_KLEIN} cursor-pointer text-link hover:bg-action-subtle`}
                   >
-                    <RotateCcw className="size-2.5" />
+                    <RotateCcw className="size-3.5" aria-hidden />
                     <span>{locale === "en" ? "Reset Chat" : "Chat-Reset"}</span>
                   </button>
                 </div>
 
                 <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-muted mb-1">
+                  <div className="mb-1 text-caption font-semibold text-fg-muted">
                     {locale === "en"
                       ? "Saved Farm Context"
                       : "Gespeicherte Hof-Angaben"}
                   </div>
                   {knownFactsSummary.length === 0 ? (
-                    <p className="text-[11px] text-muted leading-[1.618]">
+                    <p className="text-fg-muted">
                       {locale === "en"
                         ? "Tell me about your soil, crop rotation, irrigation, or drought experience—I'll note it automatically."
                         : "Erzähl mir von deiner Fruchtfolge, Bodenart, Beregnung oder Trockenheits-Erfahrung – ich notiere es automatisch."}
                     </p>
                   ) : (
-                    <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
+                    <ul className="max-h-24 divide-y divide-divider overflow-y-auto border-t border-divider pr-1">
                       {knownFactsSummary.map((fact, idx) => (
-                        <div
+                        <li
                           key={`${fact.topic}-${idx}`}
-                          className="flex items-start gap-1.5 rounded-[8px] bg-leaf-50/80 px-2 py-1 text-[11px] text-ink ring-1 ring-leaf-200/70"
+                          className="flex items-baseline gap-2 py-1.5 text-fg"
                         >
-                          <span className="shrink-0 rounded bg-leaf-200/70 px-1.5 py-0.2 text-[9px] font-bold text-leaf-900">
+                          <span className="shrink-0 text-caption font-semibold text-link">
                             {fact.label}
                             {fact.jahr ? ` ${fact.jahr}` : ""}
                           </span>
-                          <span className="leading-[1.618]">{fact.text}</span>
-                        </div>
+                          <span>{fact.text}</span>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   )}
                 </div>
 
                 {visibleBreederInsights.length > 0 && (
-                  <div className="pt-[8px] border-t border-line/60">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-leaf-700 mb-1">
+                  <div className="border-t border-divider pt-3">
+                    <div className="mb-1 text-caption font-semibold text-fg-muted">
                       {locale === "en"
                         ? "Active Variety Genetics"
                         : "Züchterprofil zur aktuellen Ansicht"}
                     </div>
-                    <div className="space-y-1">
+                    <div className="space-y-1.5">
                       {visibleBreederInsights.slice(0, 2).map((b) => (
-                        <div
-                          key={b.name}
-                          className="rounded-[8px] bg-sand-50 px-2 py-1 text-[11px] leading-[1.618] ring-1 ring-line"
-                        >
-                          <span className="font-bold text-ink">{b.name}:</span>{" "}
-                          <span className="text-ink/85">{b.summary}</span>
-                        </div>
+                        <p key={b.name} className="text-fg-muted">
+                          <span className="font-semibold text-fg">{b.name}:</span>{" "}
+                          <span>{b.summary}</span>
+                        </p>
                       ))}
                     </div>
                   </div>
@@ -862,42 +873,42 @@ export function SprossCopilot() {
               </div>
             )}
 
-            {/* 2. Page orientation & chips (upper ~38.2% zone, shrink-0) */}
-            <div className="shrink-0 rounded-[13px] border border-leaf-200/80 bg-gradient-to-br from-leaf-50/90 to-sand-100/50 p-[13px] text-xs leading-[1.618] text-ink/90 shadow-soft space-y-[8px]">
-              <div className="flex items-center justify-between gap-2 pb-[6px] border-b border-leaf-200/50 text-[10px]">
-                <span className="font-bold uppercase tracking-wider text-leaf-800 truncate">
+            {/* 2. Page orientation & quick actions (shrink-0) */}
+            <div className="shrink-0 space-y-3 text-small text-fg">
+              <div className="flex items-center justify-between gap-2 text-caption">
+                <span className="truncate font-semibold text-fg-muted">
                   {stepLabel}
                 </span>
                 {missingInfoHint && (
-                  <span className="rounded-full bg-sand-200/80 px-2 py-0.2 font-semibold text-ink truncate max-w-[190px]">
+                  <span className="max-w-[190px] truncate text-fg-muted">
                     {missingInfoHint}
                   </span>
                 )}
               </div>
 
-              <div className="text-xs leading-[1.618] text-ink/95">
+              <div>
                 <FormattedProactiveText text={proactiveText} />
               </div>
 
               {activeVariety && breederImpulse && (
-                <div className="rounded-[8px] bg-white/90 px-[10px] py-[6px] text-[11px] leading-[1.618] text-ink ring-1 ring-leaf-200/80">
-                  <span className="font-bold text-leaf-800">
+                <p className="border-l-2 border-divider pl-3 text-fg-muted">
+                  <span className="font-semibold text-fg">
                     {locale === "en" ? "Breeder Profile: " : "Züchterwissen: "}
                   </span>
                   <span>{breederImpulse}</span>
-                </div>
+                </p>
               )}
 
               {focusedHint && (
-                <div className="flex items-center gap-1.5 rounded-[8px] bg-leaf-100/80 px-[10px] py-[6px] text-[11px] font-medium text-leaf-900">
-                  <ArrowRight className="size-3 shrink-0 text-leaf-700" />
+                <div className="flex items-center gap-1.5 font-semibold text-link">
+                  <ArrowRight className="size-3.5 shrink-0" aria-hidden />
                   <span className="truncate">{focusedHint}</span>
                 </div>
               )}
 
-              {/* Context-synchronized action chips */}
+              {/* Context-synchronized quick actions */}
               {proactiveChips && proactiveChips.length > 0 && (
-                <div className="flex flex-wrap gap-[8px] pt-[8px] border-t border-leaf-200/40">
+                <div className="flex flex-wrap gap-2 border-t border-divider pt-3">
                   {proactiveChips.map((chip: SprossChip) => {
                     const isTargetActive =
                       chip.target && activeHighlight === chip.target;
@@ -910,10 +921,10 @@ export function SprossCopilot() {
                         }
                         onMouseLeave={() => setHighlight(null)}
                         onClick={() => handleChipClick(chip)}
-                        className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm transition active:scale-95 cursor-pointer ${
+                        className={`${AKTION} cursor-pointer ${
                           isTargetActive
-                            ? "bg-red-500 text-white ring-2 ring-red-400"
-                            : "bg-white text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100 hover:ring-leaf-400"
+                            ? "bg-selected text-on-selected"
+                            : "text-link ring-1 ring-inset ring-action hover:bg-action-subtle"
                         }`}
                       >
                         <span>{chip.label}</span>
@@ -925,42 +936,42 @@ export function SprossCopilot() {
 
               {/* Direct page control actions (when chat is collapsed) */}
               {!isChatOpen && latestUiActions.length > 0 && (
-                <div className="flex flex-wrap gap-[8px] pt-1">
+                <div className="flex flex-wrap gap-2">
                   {latestUiActions.map((act, idx) => (
                     <button
                       key={`${act.type}-${act.label}-${idx}`}
                       type="button"
                       onClick={() => executeUiAction(act)}
-                      className="inline-flex items-center gap-1 rounded-full bg-leaf-700 px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-leaf-800 transition cursor-pointer"
+                      className={`${AKTION} cursor-pointer bg-action text-fg-inverse hover:bg-action-hover`}
                     >
                       <span>{act.label}</span>
-                      <ArrowRight className="size-3" />
+                      <ArrowRight className="size-3.5" aria-hidden />
                     </button>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* 3. Scrollable chat history (lower ~61.8% zone, flex-1 min-h-0) */}
+            {/* 3. Scrollable chat history (flex-1 min-h-0) */}
             {isChatOpen && (
               <div
                 ref={desktopChatScrollRef}
-                className="flex-1 min-h-0 overflow-y-auto space-y-[13px] pr-1 py-1 text-xs sm:text-sm border-t border-line/70 [scrollbar-width:thin]"
+                className="min-h-0 flex-1 space-y-4 overflow-y-auto border-t border-divider py-3 pr-1 text-small [scrollbar-width:thin]"
               >
                 {conversation?.messages.map((m) =>
                   m.role === "assistant" ? (
-                    <div key={m.id} className="flex items-start gap-[8px]">
-                      <SprossAvatar size={22} className="mt-1 shrink-0" />
-                      <div className="max-w-[85%] space-y-[8px]">
-                        <div className="whitespace-pre-line rounded-[13px] rounded-tl-xs bg-sand-100/85 px-[13px] py-[8px] leading-[1.618] text-ink shadow-soft ring-1 ring-line">
+                    <div key={m.id} className="flex items-start gap-2">
+                      <SprossAvatar size={22} className="mt-0.5 shrink-0" />
+                      <div className="max-w-[85%] space-y-2">
+                        <div className="whitespace-pre-line text-fg">
                           {m.text}
                         </div>
                         {m.savedFacts?.map((fact) => (
                           <div
                             key={fact}
-                            className="flex items-start gap-1.5 rounded-[8px] bg-leaf-50 px-2.5 py-1 text-[11px] font-medium leading-[1.618] text-leaf-800 ring-1 ring-leaf-200"
+                            className="flex items-start gap-1.5 text-caption font-semibold text-status-ok-text"
                           >
-                            <Check className="mt-0.5 size-3 shrink-0 text-leaf-600" />
+                            <Check className="mt-0.5 size-3.5 shrink-0 text-status-ok" aria-hidden />
                             <span>
                               {t.spross.noted}
                               {fact}
@@ -968,16 +979,16 @@ export function SprossCopilot() {
                           </div>
                         ))}
                         {m.uiActions && m.uiActions.length > 0 && (
-                          <div className="flex flex-wrap gap-[8px] pt-0.5">
+                          <div className="flex flex-wrap gap-2 pt-0.5">
                             {m.uiActions.map((act, idx) => (
                               <button
                                 key={`${m.id}-act-${idx}`}
                                 type="button"
                                 onClick={() => executeUiAction(act)}
-                                className="inline-flex items-center gap-1 rounded-full bg-leaf-700 px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-leaf-800 transition cursor-pointer"
+                                className={`${AKTION} cursor-pointer bg-action text-fg-inverse hover:bg-action-hover`}
                               >
                                 <span>{act.label}</span>
-                                <ArrowRight className="size-3" />
+                                <ArrowRight className="size-3.5" aria-hidden />
                               </button>
                             ))}
                           </div>
@@ -986,7 +997,7 @@ export function SprossCopilot() {
                     </div>
                   ) : (
                     <div key={m.id} className="flex justify-end">
-                      <div className="max-w-[85%] whitespace-pre-line rounded-[13px] rounded-tr-xs bg-leaf-600 px-[13px] py-[8px] leading-[1.618] text-white shadow-soft">
+                      <div className="max-w-[85%] whitespace-pre-line rounded-control bg-highlight px-3 py-2 text-fg">
                         {m.text}
                       </div>
                     </div>
@@ -994,7 +1005,7 @@ export function SprossCopilot() {
                 )}
 
                 {denkt && (
-                  <div className="flex items-center gap-2 text-xs text-muted py-1">
+                  <div className="flex items-center gap-2 py-1 text-fg-muted">
                     <SprossAvatar size={20} mood="denkt" />
                     <span>
                       {locale === "en"
@@ -1005,7 +1016,7 @@ export function SprossCopilot() {
                 )}
 
                 {fehler && (
-                  <div className="rounded-[8px] bg-red-50 p-2 text-xs text-red-700 ring-1 ring-red-200">
+                  <div className={FEHLER}>
                     {fehler}
                   </div>
                 )}
@@ -1013,19 +1024,19 @@ export function SprossCopilot() {
             )}
 
             {/* 4. Bottom input row & suggested prompts (shrink-0 mt-auto) */}
-            <div className="shrink-0 mt-auto space-y-[8px]">
+            <div className="mt-auto shrink-0 space-y-2">
               {/* Suggested response prompts directly above input */}
               {isChatOpen &&
                 conversation &&
                 conversation.vorschlaege.length > 0 &&
                 !denkt && (
-                  <div className="flex flex-wrap gap-[8px] pt-1">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {conversation.vorschlaege.map((v) => (
                       <button
                         key={v}
                         type="button"
                         onClick={() => sendMessage(v, pathname)}
-                        className="rounded-full bg-leaf-50 px-2.5 py-1 text-[11px] font-medium text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100 transition cursor-pointer"
+                        className={`${AKTION_KLEIN} cursor-pointer text-fg ring-1 ring-inset ring-control hover:bg-action-subtle`}
                       >
                         {v}
                       </button>
@@ -1034,10 +1045,7 @@ export function SprossCopilot() {
                 )}
 
               {/* Input form anchored at bottom */}
-              <form
-                onSubmit={handleFormSubmit}
-                className="flex items-center gap-[8px] rounded-[13px] border border-line bg-white px-[13px] py-1 shadow-sm transition focus-within:border-leaf-500 focus-within:ring-2 focus-within:ring-leaf-200"
-              >
+              <form onSubmit={handleFormSubmit} className={EINGABE}>
                 <input
                   ref={inputRef}
                   data-spross-input="true"
@@ -1046,29 +1054,29 @@ export function SprossCopilot() {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={t.spross.inputPlaceholder}
                   disabled={denkt}
-                  className="h-8 min-w-0 flex-1 bg-transparent text-xs sm:text-sm text-ink outline-none placeholder:text-muted/60 disabled:opacity-50"
+                  className="h-10 min-w-0 flex-1 bg-transparent text-small text-fg outline-none placeholder:text-fg-muted disabled:opacity-50"
                 />
                 <button
                   type="submit"
                   disabled={!inputText.trim() || denkt}
                   aria-label={t.spross.sendAria}
-                  className="flex size-7 items-center justify-center rounded-[8px] bg-leaf-600 text-white shadow-soft transition hover:bg-leaf-700 disabled:opacity-30 disabled:pointer-events-none active:scale-95 cursor-pointer"
+                  className={SENDEN}
                 >
-                  <Send className="size-3.5" />
+                  <Send className="size-4" aria-hidden />
                 </button>
               </form>
 
               {/* Footer row below input when conversation is open */}
               {isChatOpen && (
-                <div className="flex items-center justify-between text-[11px] pt-0.5">
+                <div className="flex items-center justify-between pt-0.5 text-caption">
                   <div className="flex items-center gap-3">
                     {teamAnruf && (
                       <button
                         type="button"
                         onClick={() => oeffne("anruf")}
-                        className="inline-flex items-center gap-1 font-medium text-leaf-800 hover:underline cursor-pointer"
+                        className="inline-flex cursor-pointer items-center gap-1 font-semibold text-link hover:underline"
                       >
-                        <Phone className="size-3" />
+                        <Phone className="size-3.5" aria-hidden />
                         <span>{t.spross.callTeam}</span>
                       </button>
                     )}
@@ -1076,9 +1084,9 @@ export function SprossCopilot() {
                       <button
                         type="button"
                         onClick={() => void resetConversation()}
-                        className="inline-flex items-center gap-1 text-muted hover:text-ink transition cursor-pointer"
+                        className="inline-flex cursor-pointer items-center gap-1 text-fg-muted transition-colors hover:text-fg"
                       >
-                        <RotateCcw className="size-3" />
+                        <RotateCcw className="size-3.5" aria-hidden />
                         <span>{locale === "en" ? "Reset" : "Neu starten"}</span>
                       </button>
                     )}
@@ -1086,7 +1094,7 @@ export function SprossCopilot() {
                   <button
                     type="button"
                     onClick={() => setIsChatOpen(false)}
-                    className="text-muted hover:text-ink font-medium transition cursor-pointer"
+                    className="cursor-pointer font-semibold text-fg-muted transition-colors hover:text-fg"
                   >
                     {t.spross.closeEsc}
                   </button>
@@ -1103,31 +1111,26 @@ export function SprossCopilot() {
       {!isChatOpen && (
         <nav
           aria-label="Spross Leiste"
-          className="fixed inset-x-0 bottom-0 z-40 lg:hidden"
+          className="print-hide fixed inset-x-0 bottom-0 z-40 border-t border-divider bg-surface shadow-lift lg:hidden"
         >
-          <div className="spross-leiste-flaeche absolute inset-0 pointer-events-none shadow-lift" />
-          <div className="relative z-10 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5">
+          <div className="px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-2.5">
             <div className="flex items-center justify-between gap-2.5">
               <button
                 type="button"
                 onClick={() => {
                   setIsChatOpen(true);
                 }}
-                className="flex flex-1 items-center gap-2.5 rounded-full bg-leaf-50/90 py-2 pl-2.5 pr-4 ring-1 ring-leaf-200 shadow-soft transition active:scale-95"
+                className="flex min-h-touch flex-1 items-center gap-2.5 rounded-control py-1 pl-1 pr-3 text-left transition-colors hover:bg-action-subtle"
               >
-                <span className="relative flex size-8 items-center justify-center rounded-full bg-white ring-1 ring-leaf-200">
-                  <SprossAvatar size={24} mood={denkt ? "denkt" : mood} />
-                  <span
-                    className={`absolute -bottom-0.5 -right-0.5 size-2 rounded-full ring-2 ring-white ${
-                      denkt ? "bg-amber-400 animate-ping" : "bg-emerald-500"
-                    }`}
-                  />
+                <span className="relative flex size-8 shrink-0 items-center justify-center rounded-full">
+                  <SprossAvatar size={28} mood={denkt ? "denkt" : mood} />
+                  {statusPunkt("size-2")}
                 </span>
-                <div className="text-left min-w-0 flex-1">
-                  <span className="block text-xs font-bold leading-tight text-ink truncate">
+                <div className="min-w-0 flex-1 text-left">
+                  <span className="block truncate text-small font-semibold leading-tight text-fg">
                     {t.spross.askMobile}
                   </span>
-                  <span className="block text-[10px] leading-tight text-muted truncate">
+                  <span className="block truncate text-caption leading-tight text-fg-muted">
                     {denkt ? t.spross.thinking : stepLabel}
                   </span>
                 </div>
@@ -1137,9 +1140,9 @@ export function SprossCopilot() {
                 <button
                   type="button"
                   onClick={() => oeffne("anruf")}
-                  className="flex h-11 items-center gap-1.5 rounded-full bg-leaf-800 px-3.5 text-xs font-semibold text-white shadow-soft transition active:scale-95"
+                  className={buttonClass("secondary", "sm", "shrink-0 px-3")}
                 >
-                  <Phone className="size-3.5" aria-hidden />
+                  <Phone className="size-4" aria-hidden />
                   <span>{t.spross.teamMobile}</span>
                 </button>
               ) : null}
@@ -1151,32 +1154,28 @@ export function SprossCopilot() {
       {/* Mobile drawer */}
       {isChatOpen && (
         <div
-          className="fixed inset-0 z-50 flex flex-col justify-end bg-black/40 backdrop-blur-sm lg:hidden animate-fade-in"
+          className="print-hide fixed inset-0 z-50 flex flex-col justify-end bg-scrim lg:hidden"
           onClick={() => setIsChatOpen(false)}
         >
           <div
-            className="relative flex max-h-[86dvh] w-full flex-col rounded-t-[21px] bg-white pb-[max(1rem,env(safe-area-inset-bottom))] shadow-2xl animate-rise"
+            className="relative flex max-h-[86dvh] w-full flex-col rounded-t-panel bg-surface pb-[max(1rem,env(safe-area-inset-bottom))] shadow-lift"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Mobile drawer header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-line px-[21px] py-[13px] bg-white/95 rounded-t-[21px] backdrop-blur-md">
+            <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-panel border-b border-divider bg-surface px-5 py-3">
               <div className="flex items-center gap-2.5">
-                <div className="relative flex size-9 items-center justify-center rounded-full bg-leaf-50 ring-1 ring-leaf-200">
-                  <SprossAvatar size={28} mood={denkt ? "denkt" : mood} />
-                  <span
-                    className={`absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white ${
-                      denkt ? "bg-amber-400 animate-ping" : "bg-emerald-500"
-                    }`}
-                  />
+                <div className="relative flex size-9 items-center justify-center rounded-full">
+                  <SprossAvatar size={30} mood={denkt ? "denkt" : mood} />
+                  {statusPunkt("size-2.5")}
                 </div>
                 <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-ink">Spross</span>
-                    <span className="rounded-full bg-leaf-100 px-1.5 py-0.5 text-[10px] font-semibold text-leaf-800">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-small font-bold text-fg">Spross</span>
+                    <span className="text-caption font-semibold text-fg-muted">
                       {t.spross.copilot}
                     </span>
                   </div>
-                  <span className="text-[11px] text-muted">
+                  <span className="text-caption text-fg-muted">
                     {denkt
                       ? t.spross.analyzing
                       : !hydriert || !conversation
@@ -1191,40 +1190,38 @@ export function SprossCopilot() {
                 type="button"
                 onClick={() => setIsChatOpen(false)}
                 aria-label={locale === "en" ? "Close history" : "Verlauf schließen"}
-                className="flex size-8 items-center justify-center rounded-full text-muted hover:bg-leaf-100 hover:text-ink transition"
+                className="flex size-touch items-center justify-center rounded-control text-fg-muted transition-colors hover:bg-action-subtle hover:text-fg"
               >
-                <ChevronDown className="size-5" />
+                <ChevronDown className="size-5" aria-hidden />
               </button>
             </div>
 
             {/* Mobile chat messages & proactive content */}
             <div
               ref={mobileChatScrollRef}
-              className="flex-1 overflow-y-auto px-[21px] py-[13px] space-y-[13px] [scrollbar-width:thin]"
+              className="flex-1 space-y-4 overflow-y-auto px-5 py-4 text-small [scrollbar-width:thin]"
             >
-              {/* Mobile proactive speech bubble */}
-              <div className="relative rounded-[13px] border border-leaf-200/80 bg-gradient-to-br from-leaf-50/90 to-sand-100/50 p-[13px] text-xs leading-[1.618] text-ink/90 shadow-soft space-y-[8px]">
-                <div className="flex items-center justify-between gap-2 pb-1 border-b border-leaf-200/40 text-[10px]">
-                  <span className="font-bold uppercase tracking-wider text-leaf-800 truncate">
-                    {stepLabel}
-                  </span>
+              {/* Mobile proactive context, flat */}
+              <div className="space-y-3 border-b border-divider pb-4 text-fg">
+                <div className="truncate text-caption font-semibold text-fg-muted">
+                  {stepLabel}
                 </div>
 
-                <div className="leading-[1.618]">
+                <div>
                   <FormattedProactiveText text={proactiveText} />
                 </div>
 
                 {activeVariety && breederImpulse && (
-                  <div className="rounded-[8px] bg-white/85 px-2.5 py-1.5 text-[11px] leading-[1.618] text-ink ring-1 ring-leaf-200/80">
-                    <span className="font-bold text-leaf-800">
+                  <p className="border-l-2 border-divider pl-3 text-fg-muted">
+                    <span className="font-semibold text-fg">
                       {locale === "en" ? "Breeder Profile: " : "Züchterwissen: "}
                     </span>
                     <span>{breederImpulse}</span>
-                  </div>
+                  </p>
                 )}
 
                 {proactiveChips && proactiveChips.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-[8px] pt-1.5 border-t border-leaf-200/40">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     {proactiveChips.map((chip: SprossChip) => {
                       const isTargetActive =
                         chip.target && activeHighlight === chip.target;
@@ -1233,10 +1230,10 @@ export function SprossCopilot() {
                           key={chip.id}
                           type="button"
                           onClick={() => handleChipClick(chip)}
-                          className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold shadow-sm active:scale-95 transition ${
+                          className={`${AKTION} ${
                             isTargetActive
-                              ? "bg-red-500 text-white ring-2 ring-red-400"
-                              : "bg-white text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100"
+                              ? "bg-selected text-on-selected"
+                              : "text-link ring-1 ring-inset ring-action hover:bg-action-subtle"
                           }`}
                         >
                           {chip.label}
@@ -1250,18 +1247,18 @@ export function SprossCopilot() {
               {/* Mobile chat message list */}
               {conversation?.messages.map((m) =>
                 m.role === "assistant" ? (
-                  <div key={m.id} className="flex items-start gap-[8px]">
-                    <SprossAvatar size={22} className="mt-1 shrink-0" />
-                    <div className="max-w-[85%] space-y-[8px]">
-                      <div className="whitespace-pre-line rounded-[13px] rounded-tl-xs bg-sand-100/85 px-[13px] py-[8px] leading-[1.618] text-ink shadow-soft ring-1 ring-line text-xs sm:text-sm">
+                  <div key={m.id} className="flex items-start gap-2">
+                    <SprossAvatar size={22} className="mt-0.5 shrink-0" />
+                    <div className="max-w-[85%] space-y-2">
+                      <div className="whitespace-pre-line text-fg">
                         {m.text}
                       </div>
                       {m.savedFacts?.map((fact) => (
                         <div
                           key={fact}
-                          className="flex items-start gap-1.5 rounded-[8px] bg-leaf-50 px-2.5 py-1 text-[11px] font-medium leading-[1.618] text-leaf-800 ring-1 ring-leaf-200"
+                          className="flex items-start gap-1.5 text-caption font-semibold text-status-ok-text"
                         >
-                          <Check className="mt-0.5 size-3 shrink-0 text-leaf-600" />
+                          <Check className="mt-0.5 size-3.5 shrink-0 text-status-ok" aria-hidden />
                           <span>
                             {t.spross.noted}
                             {fact}
@@ -1269,16 +1266,16 @@ export function SprossCopilot() {
                         </div>
                       ))}
                       {m.uiActions && m.uiActions.length > 0 && (
-                        <div className="flex flex-wrap gap-[8px] pt-0.5">
+                        <div className="flex flex-wrap gap-2 pt-0.5">
                           {m.uiActions.map((act, idx) => (
                             <button
                               key={`${m.id}-mob-act-${idx}`}
                               type="button"
                               onClick={() => executeUiAction(act)}
-                              className="inline-flex items-center gap-1 rounded-full bg-leaf-700 px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-leaf-800 transition"
+                              className={`${AKTION} bg-action text-fg-inverse hover:bg-action-hover`}
                             >
                               <span>{act.label}</span>
-                              <ArrowRight className="size-3" />
+                              <ArrowRight className="size-3.5" aria-hidden />
                             </button>
                           ))}
                         </div>
@@ -1287,7 +1284,7 @@ export function SprossCopilot() {
                   </div>
                 ) : (
                   <div key={m.id} className="flex justify-end">
-                    <div className="max-w-[85%] whitespace-pre-line rounded-[13px] rounded-tr-xs bg-leaf-600 px-[13px] py-[8px] leading-[1.618] text-white shadow-soft text-xs sm:text-sm">
+                    <div className="max-w-[85%] whitespace-pre-line rounded-control bg-highlight px-3 py-2 text-fg">
                       {m.text}
                     </div>
                   </div>
@@ -1295,7 +1292,7 @@ export function SprossCopilot() {
               )}
 
               {denkt && (
-                <div className="flex items-center gap-2 text-xs text-muted">
+                <div className="flex items-center gap-2 text-fg-muted">
                   <SprossAvatar size={20} mood="denkt" />
                   <span>
                     {locale === "en"
@@ -1306,22 +1303,22 @@ export function SprossCopilot() {
               )}
 
               {fehler && (
-                <div className="rounded-[8px] bg-red-50 p-2 text-xs text-red-700 ring-1 ring-red-200">
+                <div className={FEHLER}>
                   {fehler}
                 </div>
               )}
             </div>
 
             {/* Mobile input row (anchored at bottom) */}
-            <div className="border-t border-line px-[21px] pt-[8px] pb-1 bg-white space-y-[8px]">
+            <div className="space-y-2 border-t border-divider bg-surface px-5 pb-1 pt-3">
               {conversation && conversation.vorschlaege.length > 0 && !denkt && (
-                <div className="flex flex-wrap gap-[8px]">
+                <div className="flex flex-wrap gap-2">
                   {conversation.vorschlaege.map((v) => (
                     <button
                       key={v}
                       type="button"
                       onClick={() => sendMessage(v, pathname)}
-                      className="rounded-full bg-leaf-50 px-2.5 py-1 text-[11px] font-medium text-leaf-800 ring-1 ring-leaf-200 hover:bg-leaf-100 transition"
+                      className={`${AKTION_KLEIN} text-fg ring-1 ring-inset ring-control hover:bg-action-subtle`}
                     >
                       {v}
                     </button>
@@ -1329,10 +1326,7 @@ export function SprossCopilot() {
                 </div>
               )}
 
-              <form
-                onSubmit={handleFormSubmit}
-                className="flex items-center gap-[8px] rounded-[13px] border border-line bg-white px-[13px] py-1 shadow-sm focus-within:border-leaf-500 focus-within:ring-2 focus-within:ring-leaf-200"
-              >
+              <form onSubmit={handleFormSubmit} className={EINGABE}>
                 <input
                   data-spross-input="true"
                   type="text"
@@ -1340,18 +1334,18 @@ export function SprossCopilot() {
                   onChange={(e) => setInputText(e.target.value)}
                   placeholder={t.spross.inputPlaceholder}
                   disabled={denkt}
-                  className="h-9 min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-muted/60 disabled:opacity-50"
+                  className="h-11 min-w-0 flex-1 bg-transparent text-body text-fg outline-none placeholder:text-fg-muted disabled:opacity-50"
                 />
                 <button
                   type="submit"
                   disabled={!inputText.trim() || denkt}
                   aria-label={t.spross.sendAria}
-                  className="flex size-8 items-center justify-center rounded-[8px] bg-leaf-600 text-white shadow-soft transition hover:bg-leaf-700 disabled:opacity-30 disabled:pointer-events-none active:scale-95"
+                  className={SENDEN}
                 >
-                  <Send className="size-4" />
+                  <Send className="size-4" aria-hidden />
                 </button>
               </form>
-              <div className="flex items-center justify-between text-[11px]">
+              <div className="flex items-center justify-between text-caption">
                 {teamAnruf ? (
                   <button
                     type="button"
@@ -1359,9 +1353,9 @@ export function SprossCopilot() {
                       setIsChatOpen(false);
                       oeffne("anruf");
                     }}
-                    className="inline-flex items-center gap-1 font-medium text-leaf-800 hover:underline"
+                    className="inline-flex min-h-touch items-center gap-1 font-semibold text-link hover:underline"
                   >
-                    <Phone className="size-3" />
+                    <Phone className="size-3.5" aria-hidden />
                     <span>{t.spross.callTeam}</span>
                   </button>
                 ) : (
@@ -1370,7 +1364,7 @@ export function SprossCopilot() {
                 <button
                   type="button"
                   onClick={() => setIsChatOpen(false)}
-                  className="text-muted hover:text-ink font-medium"
+                  className="min-h-touch font-semibold text-fg-muted hover:text-fg"
                 >
                   {t.spross.closeMobile}
                 </button>
@@ -1391,7 +1385,7 @@ function FormattedProactiveText({ text }: { text: string }) {
       {parts.map((part, index) => {
         if (part.startsWith("**") && part.endsWith("**")) {
           return (
-            <strong key={index} className="font-bold text-ink">
+            <strong key={index} className="font-semibold text-fg">
               {part.slice(2, -2)}
             </strong>
           );

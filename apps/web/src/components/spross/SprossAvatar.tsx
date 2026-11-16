@@ -5,7 +5,7 @@ import { useDemo } from "../shell/DemoContext";
 /**
  * Spross character avatar: sprouted seed mark featuring animated expressions.
  * Foliage green crown, kernel earth body, and cotyledon tip.
- * Mood states: "ruhig" (calm), "denkt" (swaying leaf), "freut" (smiling eyes).
+ * Mood states: "ruhig" (calm), "denkt" (leaf tilted, no looping motion), "freut" (smiling eyes).
  */
 export function SprossAvatar({
   size = 40,
@@ -32,7 +32,7 @@ export function SprossAvatar({
       <g transform="rotate(15 32 34)">
         <path d="M32 6 C 44 16, 48 28, 48 36 L 16 36 C 16 28, 20 16, 32 6 Z" fill="var(--color-leaf-700)" />
         <path d="M16 36 L 48 36 C 48 46, 42 54, 32 60 C 22 54, 16 46, 16 36 Z" fill="var(--color-kernel)" />
-        <g className={mood === "denkt" ? "origin-[32px_10px] animate-sway" : undefined}>
+        <g transform={mood === "denkt" ? "rotate(-7 32 10)" : undefined}>
           <path d="M32 10 C 39 1, 50 0, 56 3 C 51 11, 41 14, 32 10 Z" fill="var(--color-leaf-400)" />
         </g>
         {freut ? (
@@ -60,7 +60,7 @@ export function SprossAvatar({
 function SprossAvatarKlassisch({ size, mood, className }: { size: number; mood: "ruhig" | "denkt" | "freut"; className: string }) {
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} role="img" aria-label="Spross">
-      <g className={mood === "denkt" ? "origin-[33px_24px] animate-sway" : undefined}>
+      <g transform={mood === "denkt" ? "rotate(-7 33 24)" : undefined}>
         <path d="M33 25 C 33 18, 34 13, 37 9" fill="none" stroke="var(--color-leaf-600)" strokeWidth="3" strokeLinecap="round" />
         <path d="M36 11 C 41 3, 52 2, 57 7 C 51 14, 43 16, 36 11 Z" fill="var(--color-leaf-400)" />
         <path d="M38 10.5 C 44 8.5, 49 7.5, 54 7.5" fill="none" stroke="var(--color-leaf-600)" strokeWidth="1.1" strokeLinecap="round" opacity="0.6" />

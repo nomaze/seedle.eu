@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { buttonClass } from "@/components/ui/Button";
 
+const inputClass =
+  "mt-2 h-control w-full rounded-control border border-control bg-surface px-3 text-body text-fg";
+
 interface FarmData {
   name: string;
   strasse?: string | null;
@@ -24,50 +27,58 @@ export function EditFarmForm({ farm }: { farm: FarmData }) {
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
       }}
-      className="mt-3 space-y-3 max-w-md"
+      className="mt-4 max-w-measure space-y-5"
     >
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">
+        <label htmlFor="farm-name" className="block text-body font-semibold text-fg">
           Betriebsname
         </label>
         <input
+          id="farm-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-leaf-600 focus:outline-none"
+          className={inputClass}
         />
       </div>
       <div>
-        <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">
+        <label htmlFor="farm-strasse" className="block text-body font-semibold text-fg">
           Straße & Hausnummer
         </label>
         <input
+          id="farm-strasse"
           value={strasse}
           onChange={(e) => setStrasse(e.target.value)}
           placeholder="z. B. Dorfstraße 12"
-          className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-leaf-600 focus:outline-none"
+          className={inputClass}
         />
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         <div>
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">PLZ</label>
+          <label htmlFor="farm-plz" className="block text-body font-semibold text-fg">
+            PLZ
+          </label>
           <input
+            id="farm-plz"
             value={plz}
             onChange={(e) => setPlz(e.target.value)}
             placeholder="85354"
-            className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-leaf-600 focus:outline-none"
+            className={inputClass}
           />
         </div>
         <div className="col-span-2">
-          <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1">Ort</label>
+          <label htmlFor="farm-ort" className="block text-body font-semibold text-fg">
+            Ort
+          </label>
           <input
+            id="farm-ort"
             value={ort}
             onChange={(e) => setOrt(e.target.value)}
             placeholder="Freising"
-            className="w-full rounded-lg border border-line bg-white px-3 py-2 text-sm focus:border-leaf-600 focus:outline-none"
+            className={inputClass}
           />
         </div>
       </div>
-      <button type="submit" className={buttonClass("primary", "sm")}>
+      <button type="submit" className={buttonClass("primary", "md")}>
         {saved ? "Gespeichert" : "Speichern"}
       </button>
     </form>

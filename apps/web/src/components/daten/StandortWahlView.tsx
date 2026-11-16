@@ -2,7 +2,6 @@
 
 import {
   ArrowRight,
-  CheckCircle2,
   Database,
   Loader2,
   LocateFixed,
@@ -12,8 +11,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { useSpross } from "@/components/spross/SprossContext";
-import { Card } from "@/components/ui/Card";
+import { buttonClass } from "@/components/ui/Button";
+import { StatusMarker } from "@/components/ui/StatusMarker";
 import {
   lookupPlzNominatim,
   lookupPlzOffline,
@@ -248,177 +249,174 @@ export function StandortWahlView({
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      {/* 1. Hero header and guiding prompt */}
-      <section className="pt-1 sm:pt-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-leaf-50 px-3 py-1 text-xs font-semibold text-leaf-800 ring-1 ring-leaf-200">
-            <Database className="size-3.5 text-leaf-700" /> Regionale Sortenversuche (Demo-Datensatz)
+    <div>
+      {/* 1. Page header: meta line, title, lead */}
+      <PageHeader
+        eyebrow={
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Database className="size-4 shrink-0 text-link" aria-hidden />
+            <span>Regionale Sortenversuche (Demo-Datensatz)</span>
+            <span aria-hidden>·</span>
+            <span>100% frei zugänglich · Keine Registrierung erforderlich</span>
           </span>
-          <span className="text-xs text-muted">
-            100% frei zugänglich · Keine Registrierung erforderlich
-          </span>
-        </div>
+        }
+        title="Finde die stärksten Sorten für deinen Standort"
+        lead={
+          <>
+            Wähle deine Region auf der Karte oder gib deine Postleitzahl ein, um die regionalen
+            Spitzenreiter aus dem modellierten Sortenversuchs-Datensatz (Demo-Datensatz) zu sehen.
+          </>
+        }
+      />
 
-        <h1 className="mt-3 text-[2.1rem] font-bold leading-[1.1] tracking-tight text-ink sm:text-4xl md:text-5xl">
-          Finde die stärksten Sorten für deinen Standort
-        </h1>
+      {/* 2. Postal code input + interactive MapLibre Germany map */}
+      <section
+        aria-label="Standort-Auswahl"
+        className="grid grid-cols-1 items-start gap-x-12 gap-y-10 lg:grid-cols-12 lg:grid-rows-[auto_1fr]"
+      >
+        {/* Postal code input field */}
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-3 border-t border-rule pt-5 lg:col-span-5 lg:col-start-1 lg:row-start-1 xl:col-span-4"
+        >
+          <label
+            htmlFor="plz-input"
+            className="flex items-center gap-2 text-subheading text-fg"
+          >
+            <MapPin className="size-5 shrink-0 text-link" aria-hidden />
+            <span>Postleitzahl deines Betriebs:</span>
+          </label>
 
-        <p className="mt-3 max-w-2xl text-base text-muted sm:text-lg leading-relaxed">
-          Wähle deine Region auf der Karte oder gib deine Postleitzahl ein, um die regionalen
-          Spitzenreiter aus dem modellierten Sortenversuchs-Datensatz (Demo-Datensatz) zu sehen.
-        </p>
-      </section>
+          {/* Input field with action buttons */}
+          <div className="relative max-w-measure">
+            <input
+              id="plz-input"
+              data-spross-target="plz-input"
+              type="text"
+              inputMode="numeric"
+              maxLength={5}
+              value={plzInput}
+              onChange={(e) => processPlz(e.target.value)}
+              placeholder="PLZ eingeben (z. B. 48149 für Münster oder 84036 für Landshut)..."
+              className="h-control w-full rounded-control border border-control bg-surface pl-4 pr-20 text-lead tabular-nums text-fg placeholder:text-body placeholder:text-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
+            />
 
-      {/* 2. Step 1 Core: Postal code input + Interactive MapLibre Germany map */}
-      <section aria-label="Standort-Auswahl">
-        <Card className="space-y-5 p-5 sm:p-6 shadow-sm">
-          {/* Postal code input field */}
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-              <label
-                htmlFor="plz-input"
-                className="text-base sm:text-lg font-bold text-ink flex items-center gap-2"
-              >
-                <MapPin className="size-5 text-leaf-600 shrink-0" />
-                <span>Postleitzahl deines Betriebs:</span>
-              </label>
-
-              {/* Button: Use my location */}
-              <button
-                type="button"
-                onClick={handleUseMyLocation}
-                disabled={plzGeocoding}
-                className="inline-flex items-center gap-1.5 self-start sm:self-auto rounded-full bg-sand-100 px-3.5 py-1.5 text-xs font-semibold text-leaf-800 ring-1 ring-line hover:bg-leaf-50 hover:ring-leaf-300 transition cursor-pointer"
-              >
-                {plzGeocoding ? (
-                  <Loader2 className="size-3.5 animate-spin text-leaf-700" />
-                ) : (
-                  <LocateFixed className="size-3.5 text-leaf-700" />
-                )}
-                <span>Meinen Standort nutzen</span>
-              </button>
+            <div className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {plzGeocoding && (
+                <Loader2 className="size-5 animate-spin text-link" aria-hidden />
+              )}
+              {plzInput && (
+                <button
+                  type="button"
+                  onClick={handleResetPlz}
+                  className="flex size-9 items-center justify-center rounded-control text-fg-muted transition-colors hover:bg-highlight hover:text-fg"
+                  title="PLZ zurücksetzen"
+                  aria-label="PLZ zurücksetzen"
+                >
+                  <X className="size-4" aria-hidden />
+                </button>
+              )}
             </div>
+          </div>
 
-            {/* Input field with action buttons */}
-            <div className="relative">
-              <input
-                id="plz-input"
-                data-spross-target="plz-input"
-                type="text"
-                inputMode="numeric"
-                maxLength={5}
-                value={plzInput}
-                onChange={(e) => processPlz(e.target.value)}
-                placeholder="PLZ eingeben (z. B. 48149 für Münster oder 84036 für Landshut)..."
-                className="w-full rounded-2xl border-0 bg-white py-4 pl-4 pr-24 text-lg sm:text-xl font-medium text-ink ring-2 ring-leaf-300 shadow-sm placeholder:text-muted/60 focus:ring-2 focus:ring-leaf-600 transition"
-              />
-
-              <div className="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                {plzGeocoding && (
-                  <Loader2 className="size-5 animate-spin text-leaf-600" />
-                )}
-                {plzInput && (
-                  <button
-                    type="button"
-                    onClick={handleResetPlz}
-                    className="rounded-full p-1.5 text-muted hover:bg-sand-100 hover:text-ink transition"
-                    title="PLZ zurücksetzen"
-                  >
-                    <X className="size-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {geolocationError && (
-              <div className="rounded-xl bg-sun-50 p-2.5 text-xs text-sun-900 ring-1 ring-sun-200">
-                {geolocationError}
-              </div>
+          {/* Button: Use my location */}
+          <button
+            type="button"
+            onClick={handleUseMyLocation}
+            disabled={plzGeocoding}
+            className={buttonClass("quiet", "sm", "-ml-3 cursor-pointer")}
+          >
+            {plzGeocoding ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <LocateFixed className="size-4" aria-hidden />
             )}
+            <span>Meinen Standort nutzen</span>
+          </button>
 
-            {/* Quick-select location chips */}
-            <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs text-muted">
-              <span className="font-semibold text-ink">Schnellwahl:</span>
-              {POPULAR_PLZ_EXAMPLES.map((item) => {
-                const isActive = plzInput === item.plz;
-                return (
+          {geolocationError && (
+            <p role="alert">
+              <StatusMarker status="status-problem" label={geolocationError} />
+            </p>
+          )}
+
+          {/* Quick-select locations as text links */}
+          <p className="text-small leading-8 text-fg-muted">
+            <span className="mr-1 font-semibold text-fg">Schnellwahl:</span>
+            {POPULAR_PLZ_EXAMPLES.map((item, i) => {
+              const isActive = plzInput === item.plz;
+              return (
+                <span key={item.plz}>
                   <button
-                    key={item.plz}
                     type="button"
                     onClick={() => processPlz(item.plz)}
-                    className={`rounded-full px-3 py-1 transition cursor-pointer ${
+                    aria-pressed={isActive}
+                    className={`cursor-pointer whitespace-nowrap rounded-control py-1.5 tabular-nums underline-offset-4 transition-colors ${
                       isActive
-                        ? "bg-leaf-600 text-white font-bold shadow-sm"
-                        : "bg-white text-muted ring-1 ring-line hover:text-ink hover:ring-leaf-300"
+                        ? "font-semibold text-fg"
+                        : "text-link hover:underline"
                     }`}
                   >
                     {item.plz} {item.name}
                   </button>
-                );
-              })}
-            </div>
-          </form>
+                  {i < POPULAR_PLZ_EXAMPLES.length - 1 ? <span aria-hidden className="text-fg-muted"> · </span> : null}
+                </span>
+              );
+            })}
+          </p>
+        </form>
 
-          {/* Interactive MapLibre Germany map */}
-          <div className="pt-2">
-            <InteractiveGermanyMap
-              selectedRegion={selectedRegion || ""}
-              onSelectRegion={handleSelectRegion}
-              regionsMeta={initialRegions}
-              activePlzMarker={activePlzMarkerInfo}
-            />
-          </div>
-        </Card>
+        {/* Interactive MapLibre Germany map */}
+        <div className="lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1 xl:col-span-8 xl:col-start-5">
+          <InteractiveGermanyMap
+            selectedRegion={selectedRegion || ""}
+            onSelectRegion={handleSelectRegion}
+            regionsMeta={initialRegions}
+            activePlzMarker={activePlzMarkerInfo}
+          />
+        </div>
 
-        {/* 3. Location confirmation summary card */}
-        {selectedRegion && activeRegionMeta && destinationUrl ? (
-          <div className="mt-5 transform transition-[transform,opacity] duration-200 ease-out">
-            <div className="rounded-2xl border-2 border-leaf-500 bg-gradient-to-br from-leaf-50/90 via-white to-sand-100/60 p-5 shadow-lift sm:p-6 ring-1 ring-leaf-200">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1.5 min-w-0">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-leaf-800 uppercase tracking-wider">
-                    <CheckCircle2 className="size-4 text-leaf-600" />
-                    <span>Standort erkannt</span>
-                  </div>
+        {/* 3. Location confirmation */}
+        <div className="lg:col-span-5 lg:col-start-1 lg:row-start-2 xl:col-span-4">
+          {selectedRegion && activeRegionMeta && destinationUrl ? (
+            <div className="space-y-4 border-t border-rule pt-5">
+              <div className="space-y-1.5 min-w-0">
+                <StatusMarker status="status-ok" label="Standort erkannt" />
 
-                  {/* Detected region / municipality */}
-                  <h2 className="text-xl sm:text-2xl font-bold text-ink tracking-tight truncate">
-                    {activePlzMatch && activePlzMatch.plz && activePlzMatch.plz !== "GPS"
-                      ? `${activePlzMatch.plz} ${activePlzMatch.city ? `${activePlzMatch.city} · ` : ""}${activeRegionName}`
-                      : activeRegionName}
-                  </h2>
+                {/* Detected region / municipality */}
+                <h2 className="text-heading text-fg">
+                  {activePlzMatch && activePlzMatch.plz && activePlzMatch.plz !== "GPS"
+                    ? `${activePlzMatch.plz} ${activePlzMatch.city ? `${activePlzMatch.city} · ` : ""}${activeRegionName}`
+                    : activeRegionName}
+                </h2>
 
-                  {/* Provenance note: based on trial sites */}
-                  <p className="text-xs sm:text-sm text-muted">
-                    Basiert auf{" "}
-                    <strong className="text-ink font-semibold">
-                      {standorteCount} amtlichen Versuchsstandorten (LSV)
-                    </strong>{" "}
-                    und BSA-Wertprüfungen.
-                  </p>
-                </div>
-
-                {/* Primary action button advancing to results view */}
-                <div className="shrink-0 pt-1 sm:pt-0">
-                  <Link
-                    href={destinationUrl}
-                    className="group inline-flex w-full sm:w-auto items-center justify-center gap-2.5 rounded-full bg-leaf-600 hover:bg-leaf-500 active:bg-leaf-700 px-6 sm:px-8 h-13 text-base sm:text-lg font-bold text-white shadow-lift transition hover:scale-[1.02] active:scale-[0.98] cursor-pointer whitespace-nowrap"
-                  >
-                    <span>Ergebnisse für {activeRegionName} ansehen</span>
-                    <ArrowRight className="size-5 transition group-hover:translate-x-1" />
-                  </Link>
-                </div>
+                {/* Provenance note: based on trial sites */}
+                <p className="text-small text-fg-muted">
+                  Basiert auf{" "}
+                  <strong className="font-semibold text-fg">
+                    {standorteCount} amtlichen Versuchsstandorten (LSV)
+                  </strong>{" "}
+                  und BSA-Wertprüfungen.
+                </p>
               </div>
+
+              {/* Primary action advancing to results view */}
+              <Link
+                href={destinationUrl}
+                className={buttonClass("primary", "md", "w-full sm:w-auto")}
+              >
+                <span>Ergebnisse für {activeRegionName} ansehen</span>
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
             </div>
-          </div>
-        ) : (
-          /* Prompt state when no region is selected yet */
-          <div className="mt-4 rounded-xl border border-dashed border-line bg-sand-50/60 p-4 text-center text-xs text-muted">
-            <span className="font-medium text-ink">Keine Region ausgewählt:</span> Klicke oben auf
-            dein Bundesland auf der Karte oder wähle ein Beispiel aus den Schnellwahl-Chips.
-          </div>
-        )}
+          ) : (
+            /* Prompt state when no region is selected yet */
+            <p className="border-t border-divider pt-4 text-small text-fg-muted">
+              <span className="font-semibold text-fg">Keine Region ausgewählt:</span> Klicke oben auf
+              dein Bundesland auf der Karte oder wähle ein Beispiel aus den Schnellwahl-Chips.
+            </p>
+          )}
+        </div>
       </section>
     </div>
   );

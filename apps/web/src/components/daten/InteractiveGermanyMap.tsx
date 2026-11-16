@@ -5,9 +5,16 @@ import type { Map as MlMap, Marker } from "maplibre-gl";
 import { RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { loadMaplibre } from "@/components/map/loadMaplibre";
-import { DEUTSCHLAND, KARTE, LUFTBILD, themaFarbe } from "@/components/map/styles";
+import {
+  attachMapErrorShield,
+  DEUTSCHLAND,
+  KARTE,
+  LUFTBILD,
+  themaFarbe,
+} from "@/components/map/styles";
 import type { DmkRegionMeta } from "@/server/services/dmk";
 import regionsGeoJson from "./regions-geojson.json";
+import { segmentClass } from "@/components/ui/Choice";
 
 export interface ActivePlzMarkerInfo {
   plz: string;
@@ -150,6 +157,10 @@ export const CORE_REGION_DEFS: RegionCentroidDef[] = [
   },
 ];
 
+/** Segmented control (design system): rectangular segments side by side, active one in the selected role. */
+const SEGMENT_GROUP = "inline-flex flex-wrap gap-1.5";
+
+
 interface InteractiveGermanyMapProps {
   selectedRegion: string;
   onSelectRegion: (regionCode: string) => void;
@@ -171,7 +182,7 @@ export function InteractiveGermanyMap({
   const plzMarkerRef = useRef<Marker | null>(null);
   const selectedRegionRef = useRef<string>(selectedRegion);
 
-  const [stil, setStil] = useState<"karte" | "luftbild">("karte");
+  const [stil, setStil] = useState<"karte" | "luftbild">("luftbild");
   const [filterTab, setFilterTab] = useState<"alle" | "bundesland" | "naturraum">("alle");
   const [hoveredRegion, setHoveredRegion] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -335,10 +346,7 @@ export function InteractiveGermanyMap({
           cooperativeGestures: true,
         });
 
-        m.on("error", (e) => {
-          // Suppress non-critical tile 404 warnings
-          if (e.error?.message?.includes("404")) return;
-        });
+        attachMapErrorShield(m);
 
         m.on("style.load", () => {
           setupLayers();
@@ -487,13 +495,13 @@ export function InteractiveGermanyMap({
         el.type = "button";
         el.setAttribute("aria-label", `Region ${reg.name} (${reg.code})`);
         el.className = isSelected
-          ? "cursor-pointer rounded-full bg-leaf-700 px-2.5 py-1 text-xs font-bold text-white shadow-soft ring-2 ring-white scale-110 z-20 transition hover:scale-115"
+          ? "z-20 cursor-pointer rounded-control bg-selected px-2.5 py-1 text-caption font-bold text-on-selected ring-2 ring-canvas transition-colors"
           : isNaturraum
-            ? "cursor-pointer rounded-full bg-sand-25/95 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-muted shadow-sm ring-1 ring-sand-300 transition hover:scale-105 hover:bg-[#f5e9d3]"
-            : "cursor-pointer rounded-full bg-white/95 backdrop-blur-sm px-2 py-0.5 text-[11px] font-semibold text-ink shadow-sm ring-1 ring-line/80 transition hover:scale-105 hover:bg-leaf-50 hover:text-leaf-800";
+            ? "cursor-pointer rounded-control bg-surface px-2 py-0.5 text-caption font-semibold text-fg-muted ring-1 ring-control transition-colors hover:bg-highlight hover:text-fg"
+            : "cursor-pointer rounded-control bg-surface px-2 py-0.5 text-caption font-semibold text-fg ring-1 ring-control transition-colors hover:bg-action-subtle hover:text-link";
 
         const labelSpan = document.createElement("span");
-        labelSpan.className = "tracking-tight";
+        labelSpan.className = "tabular-nums";
         labelSpan.textContent = reg.shortLabel;
         el.appendChild(labelSpan);
         el.onclick = (e) => {
@@ -544,23 +552,23 @@ export function InteractiveGermanyMap({
 
       const badge = document.createElement("div");
       badge.className =
-        "relative flex items-center gap-1.5 rounded-full bg-leaf-700 px-3 py-1.5 text-xs font-bold text-white shadow-soft ring-2 ring-white";
+        "relative flex items-center gap-1.5 rounded-control bg-selected px-2.5 py-1 text-caption font-bold text-on-selected shadow-lift ring-2 ring-canvas";
 
       const ping = document.createElement("span");
-      ping.className = "size-2 rounded-full bg-sun animate-ping";
+      ping.className = "size-1.5 rounded-full bg-on-selected";
       badge.appendChild(ping);
 
       const label = document.createElement("span");
-      label.className = "tracking-tight";
+      label.className = "tabular-nums";
       label.textContent = `📍 ${activePlzMarker.plz} ${activePlzMarker.city || ""}`.trimEnd();
       badge.appendChild(label);
 
       const pointer = document.createElement("div");
-      pointer.className = "size-2 -mt-1 rotate-45 bg-leaf-700";
+      pointer.className = "size-2 -mt-1 rotate-45 bg-selected";
 
       const wave = document.createElement("div");
       wave.className =
-        "size-3.5 rounded-full bg-leaf-500/40 ring-4 ring-leaf-400/20 animate-pulse mt-0.5";
+        "mt-0.5 size-3 rounded-full border-2 border-canvas bg-selected";
 
       el.appendChild(badge);
       el.appendChild(pointer);
@@ -601,36 +609,27 @@ export function InteractiveGermanyMap({
     <div className={`space-y-4 ${className}`}>
       {/* Map header with style toggle controls */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="size-2.5 rounded-full bg-leaf-500 animate-pulse"></span>
-          <span className="text-sm font-bold text-ink">
-            Regionale Sortenversuche (Demo-Datensatz)
-          </span>
-        </div>
+        <span className="text-small font-semibold text-fg">
+          Regionale Sortenversuche (Demo-Datensatz)
+        </span>
 
         {/* Map controls toolbar */}
         <div className="flex items-center gap-2">
-          {/* Basemap / aerial toggle */}
-          <div className="inline-flex rounded-full bg-sand-100/90 p-0.5 ring-1 ring-line text-xs font-medium">
+          {/* Basemap / aerial toggle (segmented control) */}
+          <div className={SEGMENT_GROUP}>
             <button
               type="button"
               onClick={() => setStil("karte")}
-              className={`rounded-full px-2.5 py-1 transition ${
-                stil === "karte"
-                  ? "bg-white text-leaf-800 shadow-sm font-semibold"
-                  : "text-muted hover:text-ink"
-              }`}
+              aria-pressed={stil === "karte"}
+              className={segmentClass(stil === "karte")}
             >
               Karte
             </button>
             <button
               type="button"
               onClick={() => setStil("luftbild")}
-              className={`rounded-full px-2.5 py-1 transition ${
-                stil === "luftbild"
-                  ? "bg-white text-leaf-800 shadow-sm font-semibold"
-                  : "text-muted hover:text-ink"
-              }`}
+              aria-pressed={stil === "luftbild"}
+              className={segmentClass(stil === "luftbild")}
             >
               Satellit
             </button>
@@ -641,16 +640,16 @@ export function InteractiveGermanyMap({
             type="button"
             onClick={resetZoom}
             title="Ganz Deutschland anzeigen"
-            className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-ink ring-1 ring-line shadow-sm hover:bg-leaf-50 hover:text-leaf-800 transition"
+            className="inline-flex h-control-sm items-center gap-1.5 rounded-control px-3 text-small font-semibold text-link transition-colors hover:bg-action-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
           >
-            <RotateCcw className="size-3" />
+            <RotateCcw className="size-3.5" aria-hidden />
             <span className="hidden sm:inline">Ganz Deutschland</span>
           </button>
         </div>
       </div>
 
       {/* Main map container (MapLibre GL) */}
-      <div className="relative overflow-hidden rounded-2xl ring-1 ring-line shadow-soft bg-sand-100/50">
+      <div className="relative overflow-hidden rounded-panel border border-control bg-highlight">
         <div
           ref={containerRef}
           className="h-[400px] sm:h-[480px] w-full"
@@ -659,10 +658,10 @@ export function InteractiveGermanyMap({
 
         {/* Fallback message for WebGL issues */}
         {mapError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/90 p-4 text-center">
-            <div className="max-w-md rounded-xl bg-leaf-50 p-4 text-sm text-leaf-900 ring-1 ring-leaf-200">
+          <div className="absolute inset-0 flex items-center justify-center bg-canvas p-4 text-center">
+            <div className="max-w-md text-small text-fg">
               <div className="font-bold">Interaktive Kartenansicht geladen</div>
-              <p className="mt-1 text-xs text-muted">
+              <p className="mt-1 text-caption text-fg-muted">
                 Wähle deine Versuchsregion über die Buttons unter der Karte aus.
               </p>
             </div>
@@ -670,87 +669,86 @@ export function InteractiveGermanyMap({
         )}
 
         {/* Zoom controls top-right */}
-        <div className="absolute right-3 top-3 z-10 flex flex-col gap-1 rounded-xl bg-white/90 p-1 shadow-md ring-1 ring-line/80 backdrop-blur-sm">
+        <div className="absolute right-3 top-3 z-10 flex flex-col divide-y divide-divider overflow-hidden rounded-panel border border-control bg-surface shadow-lift">
           <button
             type="button"
             onClick={zoomIn}
-            className="flex size-7 items-center justify-center rounded-lg text-ink hover:bg-leaf-100 hover:text-leaf-800 transition"
+            className="flex size-9 items-center justify-center text-fg transition-colors hover:bg-action-subtle hover:text-link"
             title="Vergrößern"
+            aria-label="Vergrößern"
           >
-            <ZoomIn className="size-4" />
+            <ZoomIn className="size-4" aria-hidden />
           </button>
           <button
             type="button"
             onClick={zoomOut}
-            className="flex size-7 items-center justify-center rounded-lg text-ink hover:bg-leaf-100 hover:text-leaf-800 transition"
+            className="flex size-9 items-center justify-center text-fg transition-colors hover:bg-action-subtle hover:text-link"
             title="Verkleinern"
+            aria-label="Verkleinern"
           >
-            <ZoomOut className="size-4" />
+            <ZoomOut className="size-4" aria-hidden />
           </button>
         </div>
 
-        {/* Live status badge anchored bottom-left above map */}
+        {/* Live status label anchored bottom-left above map */}
         <div className="pointer-events-none absolute bottom-3 left-3 z-10 flex flex-wrap items-center gap-2">
-          <div className="rounded-xl bg-white/95 px-3 py-1.5 text-xs shadow-md ring-1 ring-line/80 backdrop-blur-sm">
-            <span className="font-semibold text-ink">{activeRegionDef.name}</span>
-            <span className="mx-1.5 text-muted">·</span>
-            <span className="font-bold text-leaf-700">{activeRegionDef.code}</span>
+          <div className="rounded-panel border border-control bg-surface px-3 py-1.5 text-caption shadow-lift">
+            <span className="font-semibold text-fg">{activeRegionDef.name}</span>
+            <span className="mx-1.5 text-fg-muted">·</span>
+            <span className="font-bold tabular-nums text-link">{activeRegionDef.code}</span>
             {activePlzMarker && (
               <>
-                <span className="mx-1.5 text-muted">·</span>
-                <span className="font-medium text-muted">PLZ {activePlzMarker.plz}</span>
+                <span className="mx-1.5 text-fg-muted">·</span>
+                <span className="tabular-nums text-fg-muted">PLZ {activePlzMarker.plz}</span>
               </>
             )}
           </div>
           {hoveredDef && hoveredDef.code !== activeRegionDef.code && (
-            <div className="hidden sm:block rounded-xl bg-leaf-800 text-white px-3 py-1.5 text-xs shadow-md ring-1 ring-leaf-900 backdrop-blur-sm">
+            <div className="hidden sm:block rounded-panel bg-selected px-3 py-1.5 text-caption text-on-selected shadow-lift">
               <span>{hoveredDef.name} ({hoveredDef.shortLabel})</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Segmented filter tabs for region selection pills */}
-      <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-        <div className="inline-flex rounded-full bg-sand-100/80 p-1 ring-1 ring-line text-xs font-medium">
+      {/* Segmented filter for the region list */}
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className={SEGMENT_GROUP}>
           <button
             type="button"
             onClick={() => setFilterTab("alle")}
-            className={`rounded-full px-3 py-1 transition ${
-              filterTab === "alle" ? "bg-white text-leaf-800 shadow-sm font-semibold" : "text-muted hover:text-ink"
-            }`}
+            aria-pressed={filterTab === "alle"}
+            className={segmentClass(filterTab === "alle")}
           >
             Alle 12 Regionen
           </button>
           <button
             type="button"
             onClick={() => setFilterTab("bundesland")}
-            className={`rounded-full px-3 py-1 transition ${
-              filterTab === "bundesland" ? "bg-white text-leaf-800 shadow-sm font-semibold" : "text-muted hover:text-ink"
-            }`}
+            aria-pressed={filterTab === "bundesland"}
+            className={segmentClass(filterTab === "bundesland")}
           >
             Bundesländer
           </button>
           <button
             type="button"
             onClick={() => setFilterTab("naturraum")}
-            className={`rounded-full px-3 py-1 transition ${
-              filterTab === "naturraum" ? "bg-white text-leaf-800 shadow-sm font-semibold" : "text-muted hover:text-ink"
-            }`}
+            aria-pressed={filterTab === "naturraum"}
+            className={segmentClass(filterTab === "naturraum")}
           >
             Naturräume Ost (A18–A21)
           </button>
         </div>
 
-        <span className="text-xs text-muted">
+        <span className="text-caption text-fg-muted">
           {metaMap.get(activeRegionDef.code)?.boden_klima_beschreibung
             ? `Region: ${metaMap.get(activeRegionDef.code)?.boden_klima_beschreibung}`
             : "💡 Klick auf Karte oder Button wählt Region direkt aus"}
         </span>
       </div>
 
-      {/* Clickable quick-select region pills */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Region list: selectable rows, the active one set in the selected role */}
+      <div className="grid grid-cols-2 gap-x-2 border-t border-divider pt-2 sm:grid-cols-3 xl:grid-cols-4">
         {displayedPills.map((reg) => {
           const isSelected = selectedRegion === reg.code;
           const isNaturraum = reg.category === "naturraum";
@@ -759,23 +757,24 @@ export function InteractiveGermanyMap({
               key={reg.code}
               type="button"
               onClick={() => onSelectRegion(reg.code)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition ${
+              aria-pressed={isSelected}
+              className={`flex min-h-touch items-center gap-1.5 rounded-control px-2.5 text-left text-small transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
                 isSelected
-                  ? "bg-leaf-600 text-white shadow-soft ring-1 ring-leaf-700 font-bold"
+                  ? "bg-selected text-on-selected"
                   : isNaturraum
-                    ? "bg-sand-25 text-muted ring-1 ring-sand-300 hover:bg-sand-100"
-                    : "bg-white text-ink ring-1 ring-line hover:ring-leaf-300 hover:bg-leaf-50"
+                    ? "text-fg hover:bg-highlight"
+                    : "text-link hover:bg-action-subtle"
               }`}
             >
-              <span className="font-bold">{reg.shortLabel}</span>
-              <span className="opacity-80 hidden sm:inline">· {reg.name}</span>
+              <span className="font-bold tabular-nums">{reg.shortLabel}</span>
+              <span className={`hidden truncate sm:inline ${isSelected ? "" : "text-fg-muted"}`}>· {reg.name}</span>
             </button>
           );
         })}
       </div>
 
       {/* Cartographic source attribution */}
-      <p className="text-center text-[11px] text-muted">
+      <p className="text-caption text-fg-muted">
         Kartendaten: © OpenStreetMap-Mitwirkende (ODbL) · Kartenstil: OpenFreeMap
       </p>
     </div>

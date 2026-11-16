@@ -25,7 +25,7 @@ export function ActionDock() {
       <button
         type="button"
         onClick={() => oeffne("anruf")}
-        className="flex items-center gap-2.5 rounded-full bg-leaf-800 py-3 pl-4 pr-5 text-sm font-semibold text-white shadow-lift transition hover:-translate-y-0.5 hover:bg-leaf-900"
+        className="flex min-h-11 items-center gap-2.5 rounded-control bg-action py-3 pl-4 pr-5 text-small font-semibold text-fg-inverse shadow-lift transition-colors hover:bg-action-hover"
       >
         <Phone className="size-4" aria-hidden />
         {t.shell.callTeamDock}

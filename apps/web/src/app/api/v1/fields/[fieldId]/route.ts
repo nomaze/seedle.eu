@@ -1,6 +1,6 @@
 export const dynamic = "force-static";
 export { generateFieldStaticParams as generateStaticParams } from "@/server/static-params";
-import { FieldStatusSchema, PolygonSchema, UsageSchema } from "@seedle/core";
+import { FieldStatusSchema, PolygonSchema } from "@seedle/core";
 import { z } from "zod";
 import { fehler, json, parseBody, withUser } from "@/server/http";
 import { deleteField, getField, updateField } from "@/server/services/fields";
@@ -18,7 +18,7 @@ const PatchSchema = z.object({
   geometry: PolygonSchema.optional(),
   status: FieldStatusSchema.optional(),
   crop: z.literal("mais").optional(),
-  usage: UsageSchema.optional(),
+  usage: z.enum(["koernermais", "silomais", "biogasmais", "biogas"]).optional(),
   previousVarietyId: z.string().nullable().optional(),
   previousVarietyText: z.string().max(120).nullable().optional(),
 });
@@ -27,8 +27,13 @@ export async function PATCH(req: Request, ctx: RouteContext<"/api/v1/fields/[fie
   const { fieldId } = await ctx.params;
   const body = await parseBody(req, PatchSchema);
   if (!body) return fehler("Ungültige Angaben.");
+  const normalizedUsage =
+    body.usage === "biogasmais" ? ("biogas" as const) : body.usage;
   return withUser(async (user) => {
-    const feld = await updateField(user.id, fieldId, body);
+    const feld = await updateField(user.id, fieldId, {
+      ...body,
+      usage: normalizedUsage,
+    });
     return feld ? json({ feld }) : fehler("Feld nicht gefunden.", 404);
   });
 }

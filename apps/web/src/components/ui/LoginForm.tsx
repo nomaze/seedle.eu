@@ -8,7 +8,25 @@ import { useAuth } from "@/components/shell/AuthContext";
 import { useDemo } from "@/components/shell/DemoContext";
 import { getSafeRedirect } from "@/lib/redirect";
 import { Button } from "./Button";
+import { segmentClass } from "@/components/ui/Choice";
 
+/** Form building blocks (design system): labelled inputs on surface, control height and radius. */
+const LABEL = "text-small font-semibold text-fg";
+const INPUT =
+  "mt-1.5 h-control w-full rounded-control border border-control bg-surface px-3 text-body text-fg placeholder:text-fg-muted";
+const CODE_INPUT =
+  "mt-1.5 h-control w-full rounded-control border border-control bg-surface px-3 text-center text-figure-m tabular-nums tracking-[0.3em] text-fg placeholder:text-fg-muted";
+const LINK =
+  "text-small font-semibold text-link underline decoration-link/40 underline-offset-4 hover:decoration-link";
+/** Feedback as a ruled note: urgent colour for errors, ok colour for success, plain text for info. */
+const FEEDBACK_BASE = "border-l-4 py-1 pl-3 text-small font-semibold";
+const FEEDBACK_TONE = {
+  error: "border-status-urgent text-status-urgent-text",
+  success: "border-status-ok text-status-ok-text",
+  info: "border-control text-fg",
+} as const;
+
+/** Segmented control: rectangular segments side by side, the active one in the selected role. */
 export function LoginForm({
   startEmail = "",
   ziel = "/hof",
@@ -167,39 +185,26 @@ export function LoginForm({
   // =============================================================
   if (authModus === "fake") {
     return (
-      <div className="space-y-5">
-        <div className="rounded-2xl border border-leaf-200 bg-leaf-50/70 p-4 text-xs text-ink/80 leading-relaxed">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 font-bold text-leaf-800">
-              <ShieldCheck className="size-4 text-leaf-700" /> Simulierter Demo-Login
+      <div className="space-y-6">
+        <div className="border-b border-divider pb-4">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <span className="inline-flex items-center gap-1.5 font-semibold text-fg">
+              <ShieldCheck className="size-4 text-link" aria-hidden /> Simulierter Demo-Login
             </span>
-            <Link
-              href="/demo"
-              className="text-[11px] font-semibold text-leaf-700 underline hover:text-leaf-900"
-            >
+            <Link href="/demo" className={LINK}>
               Modus in /demo wechseln
             </Link>
           </div>
-          <p className="mt-1.5 text-muted">
-            Öffentliche Vorschau von <strong>seedle.eu</strong>. Schneller Sofortzugang ohne Passwort
+          <p className="mt-1.5 text-small text-fg-muted">
+            Öffentliche Vorschau von <strong className="text-fg">seedle.eu</strong>. Schneller Sofortzugang ohne Passwort
             und ohne Speicherung personenbezogener Daten.
           </p>
         </div>
 
-        {feedback && (
-          <div
-            className={`rounded-xl p-3 text-xs font-medium ${
-              feedback.type === "error"
-                ? "border border-red-200 bg-red-50 text-red-800"
-                : "border border-leaf-300 bg-leaf-100 text-leaf-900"
-            }`}
-          >
-            {feedback.message}
-          </div>
-        )}
+        {feedback && <div className={`${FEEDBACK_BASE} ${FEEDBACK_TONE[feedback.type]}`}>{feedback.message}</div>}
 
         {!otpSent ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <Button
               type="button"
               variant="primary"
@@ -210,22 +215,21 @@ export function LoginForm({
               1-Klick: Als Musterhof fortfahren
             </Button>
 
-            <div className="relative flex items-center justify-center">
-              <div className="w-full border-t border-line" />
-              <span className="absolute bg-white px-2 text-[11px] font-medium uppercase text-muted">
-                oder beliebige E-Mail testen
-              </span>
+            <div className="flex items-center gap-3 text-small text-fg-muted">
+              <span aria-hidden className="h-px flex-1 bg-divider" />
+              oder beliebige E-Mail testen
+              <span aria-hidden className="h-px flex-1 bg-divider" />
             </div>
 
-            <form onSubmit={handleFakeOtpRequest} className="space-y-3">
+            <form onSubmit={handleFakeOtpRequest} className="space-y-4">
               <label className="block">
-                <span className="text-xs font-semibold text-ink">E-Mail-Adresse</span>
+                <span className={LABEL}>E-Mail-Adresse</span>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="demo@seedle.eu"
-                  className="mt-1 h-11 w-full rounded-xl bg-white px-4 text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+                  className={INPUT}
                 />
               </label>
 
@@ -237,14 +241,14 @@ export function LoginForm({
         ) : (
           <form onSubmit={handleFakeOtpVerify} className="space-y-4">
             <label className="block">
-              <span className="text-xs font-semibold text-ink">6-stelliger Einmalcode</span>
+              <span className={LABEL}>6-stelliger Einmalcode</span>
               <input
                 type="text"
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value)}
                 placeholder="123456"
-                className="mt-1 h-12 w-full rounded-xl bg-white px-4 text-center font-mono text-xl tracking-widest ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+                className={CODE_INPUT}
               />
             </label>
 
@@ -271,79 +275,61 @@ export function LoginForm({
   // RENDER: AUTH0 MODE (auth.nomaze.com)
   // =============================================================
   return (
-    <div className="space-y-5">
-      {/* Auth0 Mode Badge */}
-      <div className="rounded-2xl border border-leaf-300 bg-leaf-50/80 p-4 text-xs text-ink/90 leading-relaxed">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-1.5 font-bold text-leaf-900">
-            <Lock className="size-4 text-leaf-800" /> Offizieller NoMaze Auth0 Login
+    <div className="space-y-6">
+      {/* Auth0 mode note */}
+      <div className="border-b border-divider pb-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <span className="inline-flex items-center gap-1.5 font-semibold text-fg">
+            <Lock className="size-4 text-link" aria-hidden /> Offizieller NoMaze Auth0 Login
           </span>
-          <Link
-            href="/demo"
-            className="text-[11px] font-semibold text-leaf-700 underline hover:text-leaf-900"
-          >
+          <Link href="/demo" className={LINK}>
             Modus in /demo wechseln
           </Link>
         </div>
-        <p className="mt-1.5 text-muted">
-          Enterprise Single Sign-On via <strong>auth.nomaze.com</strong> (OIDC Authorization Code Flow mit PKCE S256 & Passwordless Email OTP).
+        <p className="mt-1.5 text-small text-fg-muted">
+          Enterprise Single Sign-On via <strong className="text-fg">auth.nomaze.com</strong> (OIDC Authorization Code Flow mit PKCE S256 & Passwordless Email OTP).
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex rounded-xl bg-cream-100 p-1 text-xs font-semibold text-muted">
+      {/* Segmented control: login method */}
+      <div className="flex gap-1">
         <button
           type="button"
+          aria-pressed={activeTab === "otp"}
           onClick={() => {
             setActiveTab("otp");
             setOtpSent(false);
             setFeedback(null);
           }}
-          className={`flex-1 rounded-lg py-2 transition ${
-            activeTab === "otp" ? "bg-white text-ink shadow-sm" : "hover:text-ink"
-          }`}
+          className={segmentClass(activeTab === "otp", "flex-1")}
         >
           Passwordless OTP
         </button>
         <button
           type="button"
+          aria-pressed={activeTab === "sso"}
           onClick={() => {
             setActiveTab("sso");
             setFeedback(null);
           }}
-          className={`flex-1 rounded-lg py-2 transition ${
-            activeTab === "sso" ? "bg-white text-ink shadow-sm" : "hover:text-ink"
-          }`}
+          className={segmentClass(activeTab === "sso", "flex-1")}
         >
           NoMaze SSO (PKCE)
         </button>
         <button
           type="button"
+          aria-pressed={activeTab === "voucher"}
           onClick={() => {
             setActiveTab("voucher");
             setFeedback(null);
           }}
-          className={`flex-1 rounded-lg py-2 transition ${
-            activeTab === "voucher" ? "bg-white text-ink shadow-sm" : "hover:text-ink"
-          }`}
+          className={segmentClass(activeTab === "voucher", "flex-1")}
         >
           Voucher Code
         </button>
       </div>
 
-      {feedback && (
-        <div
-          className={`rounded-xl p-3 text-xs font-medium leading-relaxed ${
-            feedback.type === "error"
-              ? "border border-red-200 bg-red-50 text-red-800"
-              : feedback.type === "success"
-              ? "border border-leaf-300 bg-leaf-100 text-leaf-900"
-              : "border border-sky-200 bg-sky-50 text-sky-800"
-          }`}
-        >
-          {feedback.message}
-        </div>
-      )}
+      {feedback && <div className={`${FEEDBACK_BASE} ${FEEDBACK_TONE[feedback.type]}`}>{feedback.message}</div>}
 
       {/* TAB 1: Passwordless OTP Flow */}
       {activeTab === "otp" && (
@@ -351,14 +337,14 @@ export function LoginForm({
           {!otpSent ? (
             <form onSubmit={handleAuth0OtpRequest} className="space-y-4">
               <label className="block">
-                <span className="text-xs font-semibold text-ink">Arbeits- oder Betriebs-E-Mail</span>
+                <span className={LABEL}>Arbeits- oder Betriebs-E-Mail</span>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="name@betrieb.de"
                   required
-                  className="mt-1 h-11 w-full rounded-xl bg-white px-4 text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+                  className={INPUT}
                 />
               </label>
 
@@ -375,7 +361,7 @@ export function LoginForm({
           ) : (
             <form onSubmit={handleAuth0OtpVerify} className="space-y-4">
               <label className="block">
-                <span className="text-xs font-semibold text-ink">
+                <span className={LABEL}>
                   6-stelliger Code gesendet an {email}
                 </span>
                 <input
@@ -385,7 +371,7 @@ export function LoginForm({
                   onChange={(e) => setCode(e.target.value)}
                   placeholder="123456"
                   required
-                  className="mt-1 h-12 w-full rounded-xl bg-white px-4 text-center font-mono text-xl tracking-widest ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+                  className={CODE_INPUT}
                 />
               </label>
 
@@ -416,19 +402,19 @@ export function LoginForm({
       {/* TAB 2: NoMaze SSO (PKCE Universal Login) */}
       {activeTab === "sso" && (
         <div className="space-y-4">
-          <p className="text-xs text-muted leading-relaxed">
+          <p className="text-small text-fg-muted">
             Nutze den offiziellen Single Sign-On Account deines Unternehmens oder Züchter-Verbands
             über das NoMaze Identity Center (PKCE S256).
           </p>
 
           <label className="block">
-            <span className="text-xs font-semibold text-ink">E-Mail (optional für Vorbelegung)</span>
+            <span className={LABEL}>E-Mail (optional für Vorbelegung)</span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="partner@saatzucht-beispiel.de"
-              className="mt-1 h-11 w-full rounded-xl bg-white px-4 text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+              className={INPUT}
             />
           </label>
 
@@ -443,66 +429,66 @@ export function LoginForm({
             {isSubmitting ? "Leite weiter zu auth.nomaze.com …" : "Mit NoMaze Single Sign-On anmelden"}
           </Button>
 
-          <div className="rounded-xl border border-line bg-cream-50 p-3 text-[11px] text-muted">
-            <div className="font-semibold text-ink">Redirect-Ziel:</div>
-            <code>https://auth.nomaze.com/authorize?client_id={auth.auth0Config.clientId}</code>
+          <div className="border-t border-divider pt-3 text-caption text-fg-muted">
+            <div className="font-semibold text-fg">Redirect-Ziel:</div>
+            <code className="break-all">https://auth.nomaze.com/authorize?client_id={auth.auth0Config.clientId}</code>
           </div>
         </div>
       )}
 
       {/* TAB 3: Event / Voucher Registration */}
       {activeTab === "voucher" && (
-        <form onSubmit={handleVoucherSubmit} className="space-y-3.5">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-leaf-800">
-            <Sparkles className="size-4" />
+        <form onSubmit={handleVoucherSubmit} className="space-y-4">
+          <div className="flex items-center gap-1.5 text-small font-semibold text-fg">
+            <Sparkles className="size-4 text-link" aria-hidden />
             <span>Event- oder Züchter-Einladungscode einlösen</span>
           </div>
 
           <label className="block">
-            <span className="text-xs font-semibold text-ink">Voucher / Einladungscode *</span>
+            <span className={LABEL}>Voucher / Einladungscode *</span>
             <input
               type="text"
               value={voucherKey}
               onChange={(e) => setVoucherKey(e.target.value)}
               placeholder="z. B. DEMO-MESSE-2026"
               required
-              className="mt-1 h-11 w-full rounded-xl bg-white px-4 font-mono uppercase text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+              className={`${INPUT} uppercase tracking-wide`}
             />
           </label>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="block">
-              <span className="text-xs font-semibold text-ink">Dein Name *</span>
+              <span className={LABEL}>Dein Name *</span>
               <input
                 type="text"
                 value={voucherName}
                 onChange={(e) => setVoucherName(e.target.value)}
                 placeholder="Dr. Julia Meyer"
                 required
-                className="mt-1 h-11 w-full rounded-xl bg-white px-4 text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+                className={INPUT}
               />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-ink">Betrieb / Unternehmen</span>
+              <span className={LABEL}>Betrieb / Unternehmen</span>
               <input
                 type="text"
                 value={voucherCompany}
                 onChange={(e) => setVoucherCompany(e.target.value)}
                 placeholder="Gut Hohenstein"
-                className="mt-1 h-11 w-full rounded-xl bg-white px-4 text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+                className={INPUT}
               />
             </label>
           </div>
 
           <label className="block">
-            <span className="text-xs font-semibold text-ink">Geschäftliche E-Mail *</span>
+            <span className={LABEL}>Geschäftliche E-Mail *</span>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="j.meyer@gut-hohenstein.de"
               required
-              className="mt-1 h-11 w-full rounded-xl bg-white px-4 text-sm ring-1 ring-line outline-none transition focus:ring-2 focus:ring-leaf-400"
+              className={INPUT}
             />
           </label>
 

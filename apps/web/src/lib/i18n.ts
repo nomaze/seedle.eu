@@ -7,6 +7,8 @@ export interface Dictionary {
   brandBar: {
     login: string;
     farm: string;
+    aboutUs: string;
+    whyWeDoThis: string;
     homeAria: string;
     backendConnected: string;
     backendOffline: string;
@@ -14,7 +16,7 @@ export interface Dictionary {
   landing: {
     heroTitle1: string;
     heroTitle2: string;
-    heroSubtitle: (versuche: number) => string;
+    heroSubtitle: (versuche?: number) => string;
     ctaRecommend: string;
     ctaBrowse: string;
     ctaLogin: string;
@@ -123,6 +125,8 @@ export interface Dictionary {
     footerOffer: string;
     footerDwd: string;
     footerDemoSettings: string;
+    footerAboutUs: string;
+    footerWhyWeDoThis: string;
     footerImprint: string;
     footerPrivacy: string;
     footerMapSource: string;
@@ -136,6 +140,8 @@ export const DICT: Record<Locale, Dictionary> = {
     brandBar: {
       login: "Anmelden",
       farm: "Mein Hof",
+      aboutUs: "Über uns",
+      whyWeDoThis: "Warum kostenlos?",
       homeAria: "Zur Startseite",
       backendConnected: "Backend verbunden",
       backendOffline: "Momentan ohne Backend (Test-Modus)",
@@ -143,8 +149,8 @@ export const DICT: Record<Locale, Dictionary> = {
     landing: {
       heroTitle1: "Dein Feld.",
       heroTitle2: "Deine beste Sorte.",
-      heroSubtitle: (versuche: number) =>
-        `Wir liefern dir feldspezifische Sorten- und Bewirtschaftungsempfehlungen für deinen Standort. Mit Begründung aus ${versuche.toLocaleString("de-DE")} Versuchsergebnissen.`,
+      heroSubtitle: () =>
+        "Wir liefern dir feldgenaue Sorten- und Anbauempfehlungen für deinen eigenen Schlag, unabhängig, praxisnah und auf Basis echter Standort- und Züchtungsmodelle.",
       ctaRecommend: "Persönliche Empfehlung",
       ctaBrowse: "Stöbern",
       ctaLogin: "Schon dabei? Anmelden",
@@ -256,10 +262,12 @@ export const DICT: Record<Locale, Dictionary> = {
       footerOffer: "Ein Angebot von NoMaze · für Landwirte kostenlos",
       footerDwd: "DWD Open Data (Freising)",
       footerDemoSettings: "Demo-Einstellungen",
+      footerAboutUs: "Über uns",
+      footerWhyWeDoThis: "Warum kostenlos?",
       footerImprint: "Impressum",
       footerPrivacy: "Datenschutz",
       footerMapSource:
-        "Kartendaten: © OpenStreetMap-Mitwirkende (ODbL) · Kartenstil: OpenFreeMap",
+        "Kartendaten: © OpenStreetMap-Mitwirkende (ODbL) · Kartenstil: OpenFreeMap · Luftbild: Esri World Imagery · Feldgrenzen: © Geobasisdaten / InVeKoS der Länder (dl-de/by-2-0, CC-BY 4.0) via fiboa · Wetter: Open-Meteo (CC-BY-4.0)",
       demoBackendStatusTitle: "Backend-Status im Header anzeigen",
       demoBackendStatusHelp:
         "Zeigt oben in der Kopfleiste an, ob die App lokal ohne Backend (Test-Modus) oder mit verbundenem Backend läuft.",
@@ -269,6 +277,8 @@ export const DICT: Record<Locale, Dictionary> = {
     brandBar: {
       login: "Sign In",
       farm: "My Farm",
+      aboutUs: "About us",
+      whyWeDoThis: "Why is it free?",
       homeAria: "To homepage",
       backendConnected: "Backend connected",
       backendOffline: "Offline mode (no backend)",
@@ -276,8 +286,8 @@ export const DICT: Record<Locale, Dictionary> = {
     landing: {
       heroTitle1: "Your field.",
       heroTitle2: "Your best variety.",
-      heroSubtitle: (versuche: number) =>
-        `We deliver field-specific variety and management recommendations for your location. Backed by ${versuche.toLocaleString("en-US")} trial results.`,
+      heroSubtitle: () =>
+        "Field-specific variety and cultivation recommendations tailored to your exact field and growing conditions.",
       ctaRecommend: "Personal Recommendation",
       ctaBrowse: "Browse",
       ctaLogin: "Already registered? Sign in",
@@ -389,10 +399,12 @@ export const DICT: Record<Locale, Dictionary> = {
       footerOffer: "Provided by NoMaze · free for farmers",
       footerDwd: "DWD Open Data (Freising)",
       footerDemoSettings: "Demo Settings",
+      footerAboutUs: "About us",
+      footerWhyWeDoThis: "Why is it free?",
       footerImprint: "Imprint",
       footerPrivacy: "Privacy Policy",
       footerMapSource:
-        "Map data: © OpenStreetMap contributors (ODbL) · Map style: OpenFreeMap",
+        "Map data: © OpenStreetMap contributors (ODbL) · Map style: OpenFreeMap · Satellite: Esri World Imagery · Field boundaries: © Geobasisdaten / InVeKoS (dl-de/by-2-0, CC-BY 4.0) via fiboa · Weather: Open-Meteo (CC-BY-4.0)",
       demoBackendStatusTitle: "Show backend status in header",
       demoBackendStatusHelp:
         "Displays a badge in the top navigation indicating whether the app is running without a backend (test mode) or connected to the backend.",

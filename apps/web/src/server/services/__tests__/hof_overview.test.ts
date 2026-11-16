@@ -57,12 +57,14 @@ describe("Farm Overview (/hof), Status Traffic Light, Farm Map, Action Panel & S
       expect(farm?.lon).toBeDefined();
 
       const fields = await listFields(DEMO_USER_ID);
-      expect(fields.length).toBe(3);
+      expect(fields.length).toBe(7);
+      const totalHa = fields.reduce((acc, f) => acc + f.areaHa, 0);
+      expect(totalHa).toBeCloseTo(100.0, 1);
 
-      // All parcels must have closed polygon rings
+      // All parcels must have closed, real multi-vertex fiboa cadastral polygon rings (>= 25 vertices each, no rectangles)
       for (const f of fields) {
         expect(f.geometry.type).toBe("Polygon");
-        expect(f.geometry.coordinates[0].length).toBeGreaterThanOrEqual(4);
+        expect(f.geometry.coordinates[0].length).toBeGreaterThanOrEqual(25);
         const ring = f.geometry.coordinates[0];
         const first = ring[0];
         const last = ring[ring.length - 1];
@@ -166,8 +168,8 @@ describe("Farm Overview (/hof), Status Traffic Light, Farm Map, Action Panel & S
     it("aggregates field parcels and total farm acreage for simulation modeling", async () => {
       const fields = await listFields(DEMO_USER_ID);
       const totalHa = fields.reduce((sum, f) => sum + (f.areaHa || 0), 0);
-      expect(totalHa).toBeCloseTo(43.7, 1); // 14.5 + 8.2 + 21.0 = 43.7 ha
-      expect(fields.length).toBe(3);
+      expect(totalHa).toBeCloseTo(100.0, 1); // 7 fields around the farmstead = 100.0 ha
+      expect(fields.length).toBe(7);
     });
   });
 });

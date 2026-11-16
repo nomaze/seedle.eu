@@ -3,13 +3,18 @@ import type { ComponentProps } from "react";
 
 type Variant = "primary" | "secondary" | "quiet";
 
+/**
+ * Buttons (design system "Button"): rectangular with radius-control, height from the control
+ * tokens, colours from the action roles. Never pill-shaped, no shadows.
+ * primary = the one main action of an area, secondary = outlined side actions, quiet = text only.
+ */
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf-500 disabled:cursor-not-allowed disabled:opacity-50";
-const sizes = { md: "h-12 px-6 text-base", sm: "h-10 px-4 text-sm" };
+  "inline-flex items-center justify-center gap-2 rounded-control font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-50";
+const sizes = { md: "h-control px-5 text-body", sm: "h-control-sm px-4 text-[0.9375rem]" };
 const variants: Record<Variant, string> = {
-  primary: "bg-leaf-700 text-white shadow-soft hover:bg-leaf-800 active:bg-leaf-900",
-  secondary: "bg-white text-ink ring-1 ring-line hover:ring-leaf-300 hover:bg-leaf-50",
-  quiet: "text-leaf-700 hover:bg-leaf-50",
+  primary: "bg-action text-fg-inverse active:bg-action-pressed",
+  secondary: "bg-transparent text-link ring-1 ring-inset ring-action",
+  quiet: "text-link",
 };
 
 export function buttonClass(variant: Variant = "primary", size: "md" | "sm" = "md", extra = "") {

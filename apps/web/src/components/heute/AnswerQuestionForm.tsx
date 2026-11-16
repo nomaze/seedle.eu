@@ -8,11 +8,11 @@ export function AnswerQuestionForm({ fieldId }: { fieldId: string }) {
   const [answered, setAnswered] = useState<string | null>(null);
 
   if (answered) {
-    return <p className="mt-3 text-xs text-leaf-700 font-semibold">Danke! Antwort „{answered}“ gespeichert.</p>;
+    return <p role="status" className="mt-4 text-small font-semibold text-status-ok-text">Danke! Antwort „{answered}“ gespeichert.</p>;
   }
 
   return (
-    <div className="mt-3 flex flex-wrap gap-2">
+    <div className="mt-4 flex flex-wrap gap-2">
       {["Ja", "Teilweise", "Nein"].map((a) => (
         <button
           key={a}

@@ -34,3 +34,12 @@ __pycache__/
 *.token
 *.secret
 
+# Local AI & IDE tool directories
+.claude/
+.opencode/
+.cursor/
+.vscode/
+docs/
+
+
+

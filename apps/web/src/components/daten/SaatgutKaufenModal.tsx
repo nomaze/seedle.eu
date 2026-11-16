@@ -2,7 +2,6 @@
 
 import {
   Building2,
-  Check,
   CheckCircle2,
   Loader2,
   MessageCircle,
@@ -14,11 +13,14 @@ import {
   X,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useDemo } from "@/components/shell/DemoContext";
 import { useSpross } from "@/components/spross/SprossContext";
 import { SprossAvatar } from "@/components/spross/SprossAvatar";
 import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
+import { optionClass, RadioMark, segmentClass } from "@/components/ui/Choice";
+import { StatusShape } from "@/components/ui/StatusMarker";
 import { num } from "@/lib/format";
 import { TEAM } from "@/lib/team";
 
@@ -46,6 +48,15 @@ const ZEITFENSTER = [
   "Morgen früh",
   "Wann es passt",
 ] as const;
+
+const FIELD_CLASS =
+  "w-full rounded-control border border-control bg-surface px-4 text-body text-fg outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
+/** Full-width form action; long labels may wrap on phones, so the control height is a minimum. */
+function wideButtonClass(variant: "primary" | "secondary") {
+  return buttonClass(variant, "md", "w-full cursor-pointer").replace("h-control", "min-h-control py-2 text-center");
+}
+const STEP_CLASS =
+  "flex shrink-0 items-center justify-center rounded-control text-link ring-1 ring-inset ring-control transition-colors hover:bg-action-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus";
 
 const FLAECHEN_PRESETS = [5, 10, 20, 35, 50, 75];
 
@@ -94,18 +105,19 @@ export function SaatgutKaufenModal({
   });
   const [einheitenManual, setEinheitenManual] = useState<number | null>(null);
   const [beizung, setBeizung] = useState<string>("vogelschutz");
-  const [telefon, setTelefon] = useState<string>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        return localStorage.getItem("nomaze_telefon") || "";
-      } catch {
-        return "";
-      }
-    }
-    return "";
-  });
+  const [telefon, setTelefon] = useState<string>("");
   const [zeitfenster, setZeitfenster] = useState<string>(ZEITFENSTER[0]);
   const [notiz, setNotiz] = useState<string>("");
+
+  useEffect(() => {
+    try {
+      const savedPhone = localStorage.getItem("nomaze_telefon");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (savedPhone) setTelefon(savedPhone);
+    } catch {
+      // Ignore storage errors
+    }
+  }, []);
 
   const [status, setStatus] = useState<"offen" | "sendet" | "fertig">("offen");
   const [anfrageTyp, setAnfrageTyp] = useState<"verbindlich" | "beratung">("verbindlich");
@@ -263,10 +275,10 @@ export function SaatgutKaufenModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6 animate-fade-in">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-6">
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-ink/70 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 bg-scrim"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -276,31 +288,26 @@ export function SaatgutKaufenModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="kauf-modal-title"
-        className="relative z-10 flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-3xl bg-white shadow-lift ring-1 ring-line animate-rise"
+        className="relative z-10 flex max-h-[92vh] w-full max-w-xl flex-col overflow-hidden rounded-panel bg-surface shadow-lift motion-safe:animate-rise motion-safe:[animation-duration:180ms]"
       >
         {/* Header */}
-        <div className="flex items-start justify-between border-b border-line bg-gradient-to-r from-leaf-50/90 via-sand-100/60 to-white p-5 sm:p-6">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-leaf-800">
-                <ShoppingBag className="size-3.5 text-leaf-700" />
-                NoMaze Saatgutservice · Händler-Vermittlung
-              </span>
-              <Badge tone="leaf">Original Züchtersaatgut</Badge>
-              {schlagName && (
-                <span className="rounded-full bg-leaf-100 px-2.5 py-0.5 text-xs font-semibold text-leaf-900 ring-1 ring-leaf-300">
-                  Schlag: {schlagName}
-                </span>
-              )}
+        <div className="flex items-start justify-between gap-4 border-b border-divider py-4 pl-5 pr-3 sm:py-5 sm:pl-6">
+          <div className="min-w-0 space-y-1">
+            <div className="flex flex-wrap items-center gap-x-1.5 text-small text-fg-muted">
+              <ShoppingBag className="size-4 shrink-0" aria-hidden />
+              <span>NoMaze Saatgutservice · Händler-Vermittlung</span>
+              <span aria-hidden>·</span>
+              <span>Original Züchtersaatgut</span>
+              {schlagName && <span>· Schlag: {schlagName}</span>}
             </div>
-            <h2 id="kauf-modal-title" className="text-2xl font-bold text-ink sm:text-3xl">
+            <h2 id="kauf-modal-title" className="text-heading text-fg">
               {variety.name} bestellen
             </h2>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
-              <Building2 className="size-3.5 text-muted" />
-              <span className="font-medium text-ink">{variety.zuechter || "Züchter unbekannt"}</span>
+            <div className="flex flex-wrap items-center gap-x-1.5 text-small text-fg-muted">
+              <Building2 className="size-4 shrink-0" aria-hidden />
+              <span className="font-semibold text-fg">{variety.zuechter || "Züchter unbekannt"}</span>
               <span>·</span>
-              <span className="rounded bg-leaf-100/80 px-1.5 py-0.5 font-bold text-leaf-900">
+              <span className="font-semibold tabular-nums text-fg">
                 {reifeText}
               </span>
               {variety.korntyp && <span>· {variety.korntyp}</span>}
@@ -310,84 +317,79 @@ export function SaatgutKaufenModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-muted transition hover:bg-white hover:text-ink hover:shadow-sm"
+            className="flex size-touch shrink-0 items-center justify-center rounded-control text-link transition-colors hover:bg-action-subtle focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             aria-label="Dialog schließen"
           >
-            <X className="size-5" />
+            <X className="size-5" aria-hidden />
           </button>
         </div>
 
         {/* Modal content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-6 sm:p-6">
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6">
           {status === "fertig" ? (
             /* Success view with Spross integration */
-            <div className="space-y-6 py-2 text-center">
-              <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-leaf-100 text-leaf-700 ring-8 ring-leaf-50">
-                <CheckCircle2 className="size-10" />
-              </div>
-
-              <div className="space-y-2">
-                <h3 className="text-2xl font-bold text-ink">
+            <div className="space-y-6">
+              <div className="space-y-2" role="status">
+                <h3 className="flex items-start gap-2 text-heading text-fg">
+                  <CheckCircle2 className="mt-0.5 size-6 shrink-0 text-status-ok" aria-hidden />
                   {anfrageTyp === "verbindlich"
                     ? "Saatgutanfrage & Händler-Vermittlung aufgenommen!"
                     : "Beratungswunsch erfolgreich übermittelt!"}
                 </h3>
-                <p className="text-sm text-muted max-w-md mx-auto">
+                <p className="max-w-measure text-small text-fg-muted">
                   Unser NoMaze-Saatgutteam prüft sofort die Züchterverfügbarkeit für{" "}
-                  <strong className="text-ink">{variety.name}</strong> und leitet die Vermittlung
+                  <strong className="text-fg">{variety.name}</strong> und leitet die Vermittlung
                   an deinen regionalen Saatguthändler ein. Wir melden uns{" "}
-                  <span className="font-semibold text-ink">{zeitfenster.toLowerCase()}</span> unter{" "}
-                  <span className="font-semibold text-ink">{telefon}</span>.
+                  <span className="font-semibold text-fg">{zeitfenster.toLowerCase()}</span> unter{" "}
+                  <span className="font-semibold text-fg">{telefon}</span>.
                 </p>
               </div>
 
-              {/* Order summary card */}
-              <div className="rounded-2xl bg-sand-50 p-4 text-left ring-1 ring-line text-sm space-y-2">
+              {/* Order summary list */}
+              <dl className="divide-y divide-divider border-y border-divider text-small">
                 {schlagName && (
-                  <div className="flex justify-between items-center border-b border-line pb-2">
-                    <span className="text-muted">Schlag</span>
-                    <span className="font-bold text-ink">{schlagName}</span>
+                  <div className="flex items-baseline justify-between gap-4 py-2.5">
+                    <dt className="text-fg-muted">Schlag</dt>
+                    <dd className="text-right font-semibold text-fg">{schlagName}</dd>
                   </div>
                 )}
-                <div className="flex justify-between items-center border-b border-line pb-2">
-                  <span className="text-muted">Gewählte Sorte</span>
-                  <span className="font-bold text-ink">{variety.name} ({reifeText})</span>
+                <div className="flex items-baseline justify-between gap-4 py-2.5">
+                  <dt className="text-fg-muted">Gewählte Sorte</dt>
+                  <dd className="text-right font-semibold text-fg tabular-nums">{variety.name} ({reifeText})</dd>
                 </div>
-                <div className="flex justify-between items-center border-b border-line pb-2">
-                  <span className="text-muted">Menge & Fläche</span>
-                  <span className="font-bold text-leaf-800">
+                <div className="flex items-baseline justify-between gap-4 py-2.5">
+                  <dt className="text-fg-muted">Menge & Fläche</dt>
+                  <dd className="text-right font-semibold text-fg tabular-nums">
                     {einheiten} Einheiten ({num(flaecheHa)} ha)
-                  </span>
+                  </dd>
                 </div>
-                <div className="flex justify-between items-center border-b border-line pb-2">
-                  <span className="text-muted">Beizausstattung</span>
-                  <span className="font-medium text-ink">{gewaehlteBeizung.name}</span>
+                <div className="flex items-baseline justify-between gap-4 py-2.5">
+                  <dt className="text-fg-muted">Beizausstattung</dt>
+                  <dd className="text-right font-semibold text-fg">{gewaehlteBeizung.name}</dd>
                 </div>
-                <div className="flex justify-between items-center pt-1 text-xs text-muted">
-                  <span>Gebindeform:</span>
-                  <span>50.000 Korn / Einheit ({gesamtKoerner.toLocaleString("de-DE")} Körner gesamt)</span>
+                <div className="flex items-baseline justify-between gap-4 py-2.5 text-caption text-fg-muted">
+                  <dt>Gebindeform:</dt>
+                  <dd className="text-right tabular-nums">50.000 Korn / Einheit ({gesamtKoerner.toLocaleString("de-DE")} Körner gesamt)</dd>
                 </div>
-              </div>
+              </dl>
 
               {/* Farm memory and Spross confirmation */}
-              <div className="rounded-2xl bg-gradient-to-br from-leaf-50 via-white to-leaf-100/40 p-4 ring-1 ring-leaf-200 text-left">
-                <div className="flex items-start gap-3">
-                  <SprossAvatar size={42} mood="freut" className="shrink-0 mt-0.5" />
-                  <div className="space-y-1">
-                    <div className="text-xs font-bold uppercase tracking-wider text-leaf-800">
-                      Im Hof-Gedächtnis gespeichert
-                    </div>
-                    <p className="text-xs text-ink/90 leading-relaxed">
-                      Spross weiß jetzt, dass du <strong>{variety.name}</strong> für die kommende
-                      Saison einplanst. Deine schlagbezogenen Ertragsprognosen und Tipps werden
-                      automatisch darauf abgestimmt.
-                    </p>
+              <div className="flex items-start gap-3">
+                <SprossAvatar size={42} mood="freut" className="mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <div className="text-small font-semibold text-fg">
+                    Im Hof-Gedächtnis gespeichert
                   </div>
+                  <p className="text-small text-fg-muted">
+                    Spross weiß jetzt, dass du <strong className="text-fg">{variety.name}</strong> für die kommende
+                    Saison einplanst. Deine schlagbezogenen Ertragsprognosen und Tipps werden
+                    automatisch darauf abgestimmt.
+                  </p>
                 </div>
               </div>
 
               {/* Completion actions */}
-              <div className="flex flex-col gap-2.5 sm:flex-row pt-2">
+              <div className="flex flex-col gap-3 border-t border-divider pt-5 sm:flex-row">
                 <button
                   type="button"
                   onClick={() => {
@@ -395,17 +397,17 @@ export function SaatgutKaufenModal({
                     else onClose();
                     router.push("/hof");
                   }}
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full bg-leaf-600 px-5 py-3 font-semibold text-white shadow-lift transition hover:bg-leaf-700 cursor-pointer"
+                  className={buttonClass("primary", "md", "flex-1 cursor-pointer")}
                 >
-                  <Building2 className="size-4" />
+                  <Building2 className="size-4" aria-hidden />
                   Weiter zu Mein Hof
                 </button>
                 <button
                   type="button"
                   onClick={handleMitSprossSprechen}
-                  className="rounded-full px-5 py-3 font-semibold text-muted ring-1 ring-line hover:bg-sand-100 hover:text-ink transition cursor-pointer"
+                  className={buttonClass("secondary", "md", "cursor-pointer")}
                 >
-                  <MessageCircle className="size-4" />
+                  <MessageCircle className="size-4" aria-hidden />
                   Mit Spross sprechen
                 </button>
               </div>
@@ -414,24 +416,25 @@ export function SaatgutKaufenModal({
             /* Seed purchase inquiry form */
             <div className="space-y-6">
               {fehler && (
-                <div className="rounded-2xl bg-poppy-soft/60 p-4 text-xs font-semibold text-poppy ring-1 ring-poppy/30">
-                  {fehler}
-                </div>
+                <p role="alert" className="flex items-start gap-2 text-small font-semibold text-status-urgent-text">
+                  <span className="mt-1"><StatusShape status="status-urgent" /></span>
+                  <span>{fehler}</span>
+                </p>
               )}
 
               {/* 1. Parcel area and volume calculator */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="flaeche-input" className="text-sm font-bold text-ink">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <label htmlFor="flaeche-input" className="text-subheading text-fg">
                     1. Geplante Anbaufläche
                   </label>
-                  <span className="text-xs text-muted">
+                  <span className="text-small text-fg-muted tabular-nums">
                     Basis: ca. 85.000 Korn/ha
                   </span>
                 </div>
 
                 {/* Input with stepper */}
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <div className="relative flex-1">
                     <input
                       id="flaeche-input"
@@ -441,32 +444,32 @@ export function SaatgutKaufenModal({
                       max={500}
                       value={flaecheHa}
                       onChange={(e) => handleFlaecheChange(Number(e.target.value))}
-                      className="h-12 w-full rounded-2xl bg-sand-50 px-4 pr-12 text-lg font-bold text-ink ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-500"
+                      className={`h-control pr-12 text-lead font-semibold tabular-nums ${FIELD_CLASS}`}
                     />
-                    <span className="pointer-events-none absolute right-4 top-3 text-sm font-bold text-muted">
+                    <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-small font-semibold text-fg-muted">
                       ha
                     </span>
                   </div>
 
                   {/* Stepper buttons */}
-                  <div className="flex gap-1.5 shrink-0">
+                  <div className="flex shrink-0 gap-2">
                     <button
                       type="button"
                       onClick={() => handleFlaecheChange(flaecheHa - 5)}
-                      className="flex size-12 items-center justify-center rounded-2xl bg-sand-100 font-bold text-ink ring-1 ring-line hover:bg-sand-200 transition"
+                      className={`size-control ${STEP_CLASS}`}
                       title="5 ha weniger"
                       aria-label="5 ha abziehen"
                     >
-                      <Minus className="size-4" />
+                      <Minus className="size-4" aria-hidden />
                     </button>
                     <button
                       type="button"
                       onClick={() => handleFlaecheChange(flaecheHa + 5)}
-                      className="flex size-12 items-center justify-center rounded-2xl bg-sand-100 font-bold text-ink ring-1 ring-line hover:bg-sand-200 transition"
+                      className={`size-control ${STEP_CLASS}`}
                       title="5 ha mehr"
                       aria-label="5 ha hinzufügen"
                     >
-                      <Plus className="size-4" />
+                      <Plus className="size-4" aria-hidden />
                     </button>
                   </div>
                 </div>
@@ -478,42 +481,45 @@ export function SaatgutKaufenModal({
                   max={100}
                   value={Math.min(100, flaecheHa)}
                   onChange={(e) => handleFlaecheChange(Number(e.target.value))}
-                  className="w-full accent-leaf-600 cursor-pointer"
+                  className="w-full cursor-pointer accent-action"
                   aria-label="Fläche per Schieberegler anpassen"
                 />
 
-                {/* Quick-selection chips */}
-                <div className="flex flex-wrap gap-1.5 pt-1">
+                {/* Quick selection as text links */}
+                <div className="flex flex-wrap items-center gap-x-1 text-small text-fg-muted">
                   {(initialFlaecheHa && !FLAECHEN_PRESETS.includes(Math.round(initialFlaecheHa))
                     ? [Math.round(initialFlaecheHa * 10) / 10, ...FLAECHEN_PRESETS]
                     : FLAECHEN_PRESETS
-                  ).map((p) => (
-                    <button
-                      key={p}
-                      type="button"
-                      onClick={() => handleFlaecheChange(p)}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition ring-1 ${
-                        flaecheHa === p
-                          ? "bg-leaf-700 text-white ring-leaf-700 shadow-sm"
-                          : "bg-white text-muted ring-line hover:text-ink hover:ring-leaf-300"
-                      }`}
-                    >
-                      {num(p)} ha{initialFlaecheHa && p === Math.round(initialFlaecheHa * 10) / 10 ? " (Schlag)" : ""}
-                    </button>
+                  ).map((p, i) => (
+                    <Fragment key={p}>
+                      {i > 0 ? <span aria-hidden>·</span> : null}
+                      <button
+                        type="button"
+                        onClick={() => handleFlaecheChange(p)}
+                        aria-pressed={flaecheHa === p}
+                        className={`inline-flex min-h-touch items-center rounded-control px-1 tabular-nums underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus ${
+                          flaecheHa === p
+                            ? "font-semibold text-fg"
+                            : "text-link underline hover:decoration-2"
+                        }`}
+                      >
+                        {num(p)} ha{initialFlaecheHa && p === Math.round(initialFlaecheHa * 10) / 10 ? " (Schlag)" : ""}
+                      </button>
+                    </Fragment>
                   ))}
                 </div>
 
                 {/* Automatically calculated seed requirements */}
-                <div className="mt-2 flex items-center justify-between rounded-2xl bg-leaf-50/80 p-4 ring-1 ring-leaf-200">
+                <div className="flex items-center justify-between gap-4 border-y border-divider py-4">
                   <div>
-                    <div className="text-xs font-semibold uppercase text-leaf-800">
+                    <div className="text-small text-fg-muted">
                       Erforderliches Saatgut
                     </div>
-                    <div className="text-xl font-bold text-ink">
+                    <div className="text-figure-m tabular-nums text-fg">
                       {einheiten} Einheiten{" "}
-                      <span className="text-xs font-normal text-muted">à 50.000 Korn</span>
+                      <span className="text-small font-normal tracking-normal text-fg-muted">à 50.000 Korn</span>
                     </div>
-                    <div className="text-xs text-muted">
+                    <div className="text-small text-fg-muted tabular-nums">
                       ≈ {gesamtKoerner.toLocaleString("de-DE")} Körner gesamt
                     </div>
                   </div>
@@ -523,19 +529,19 @@ export function SaatgutKaufenModal({
                     <button
                       type="button"
                       onClick={() => handleEinheitenChange(-1)}
-                      className="flex size-8 items-center justify-center rounded-full bg-white text-ink shadow-sm ring-1 ring-line hover:bg-leaf-100 transition text-sm font-bold"
+                      className={`size-touch text-body font-semibold ${STEP_CLASS}`}
                       title="1 Einheit abziehen"
                       aria-label="Eine Einheit abziehen"
                     >
                       -
                     </button>
-                    <span className="w-8 text-center text-sm font-bold tabular text-ink">
+                    <span className="w-8 text-center text-figure-s tabular-nums text-fg">
                       {einheiten}
                     </span>
                     <button
                       type="button"
                       onClick={() => handleEinheitenChange(1)}
-                      className="flex size-8 items-center justify-center rounded-full bg-white text-ink shadow-sm ring-1 ring-line hover:bg-leaf-100 transition text-sm font-bold"
+                      className={`size-touch text-body font-semibold ${STEP_CLASS}`}
                       title="1 Einheit hinzufügen"
                       aria-label="Eine Einheit hinzufügen"
                     >
@@ -547,10 +553,10 @@ export function SaatgutKaufenModal({
 
               {/* 2. Seed dressing options */}
               <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-ink">2. Beizausstattung wählen</span>
-                  <span className="text-xs text-leaf-800 font-semibold flex items-center gap-1">
-                    <ShieldCheck className="size-3.5 text-leaf-600" />
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <span className="text-subheading text-fg">2. Beizausstattung wählen</span>
+                  <span className="flex items-center gap-1 text-small text-fg-muted">
+                    <ShieldCheck className="size-4" aria-hidden />
                     Zulassungskonform
                   </span>
                 </div>
@@ -563,36 +569,22 @@ export function SaatgutKaufenModal({
                         key={b.id}
                         type="button"
                         onClick={() => setBeizung(b.id)}
-                        className={`w-full rounded-2xl p-3.5 text-left transition ring-1 flex items-start gap-3 ${
-                          isSelected
-                            ? "bg-leaf-50/70 ring-2 ring-leaf-600 shadow-sm"
-                            : "bg-white ring-line hover:ring-leaf-300"
-                        }`}
+                        aria-pressed={isSelected}
+                        className={optionClass(
+                          isSelected,
+                          "flex w-full items-start gap-3 p-3.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                        )}
                       >
-                        <div
-                          className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full ring-1 ${
-                            isSelected
-                              ? "bg-leaf-600 text-white ring-leaf-600"
-                              : "bg-white ring-line"
-                          }`}
-                        >
-                          {isSelected && <Check className="size-3.5 stroke-[3]" />}
-                        </div>
+                        <span className="mt-0.5">
+                          <RadioMark checked={isSelected} />
+                        </span>
 
                         <div className="flex-1 space-y-0.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-bold text-ink">{b.name}</span>
-                            <span
-                              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                isSelected
-                                  ? "bg-leaf-200 text-leaf-900"
-                                  : "bg-sand-200 text-muted"
-                              }`}
-                            >
-                              {b.tag}
-                            </span>
+                          <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                            <span className="text-body font-semibold text-fg">{b.name}</span>
+                            <Badge tone={isSelected ? "leaf" : "neutral"}>{b.tag}</Badge>
                           </div>
-                          <p className="text-xs text-muted leading-relaxed">
+                          <p className="text-small text-fg-muted">
                             {b.beschreibung}
                           </p>
                         </div>
@@ -603,12 +595,12 @@ export function SaatgutKaufenModal({
               </div>
 
               {/* 3. Contact details and callback options */}
-              <div className="space-y-3 rounded-2xl bg-sand-50 p-4 ring-1 ring-line">
-                <div className="flex items-center justify-between">
-                  <label htmlFor="kauf-tel-input" className="text-sm font-bold text-ink">
+              <div className="space-y-4 border-t border-divider pt-6">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <label htmlFor="kauf-tel-input" className="text-subheading text-fg">
                     3. Deine Telefonnummer für Rückfragen
                   </label>
-                  <span className="text-xs text-muted">Kostenfrei & unverbindlich</span>
+                  <span className="text-small text-fg-muted">Kostenfrei & unverbindlich</span>
                 </div>
 
                 <input
@@ -619,24 +611,24 @@ export function SaatgutKaufenModal({
                   value={telefon}
                   onChange={(e) => setTelefon(e.target.value)}
                   placeholder="z. B. 0171 1234567 oder 0521 987654"
-                  className="h-12 w-full rounded-xl bg-white px-4 text-base ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-500"
+                  className={`h-control ${FIELD_CLASS}`}
                 />
 
                 <div>
-                  <span className="text-xs font-semibold text-muted block mb-1.5">
+                  <span className="mb-1.5 block text-small font-semibold text-fg">
                     Wann passt dir ein kurzes Abstimmungsgespräch?
                   </span>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                     {ZEITFENSTER.map((z) => (
                       <button
                         key={z}
                         type="button"
                         onClick={() => setZeitfenster(z)}
-                        className={`rounded-full px-3 py-1 text-xs font-medium transition ring-1 ${
-                          zeitfenster === z
-                            ? "bg-leaf-800 text-white ring-leaf-800"
-                            : "bg-white text-ink ring-line hover:ring-leaf-300"
-                        }`}
+                        aria-pressed={zeitfenster === z}
+                        className={segmentClass(
+                          zeitfenster === z,
+                          "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus",
+                        )}
                       >
                         {z}
                       </button>
@@ -644,65 +636,63 @@ export function SaatgutKaufenModal({
                   </div>
                 </div>
 
-                <div className="pt-1">
-                  <textarea
-                    rows={2}
-                    maxLength={400}
-                    value={notiz}
-                    onChange={(e) => setNotiz(e.target.value)}
-                    placeholder="Optional: Wunsch-Lieferzeitpunkt, Schlagname oder Notiz"
-                    className="w-full rounded-xl bg-white px-3 py-2 text-xs ring-1 ring-line outline-none focus:ring-2 focus:ring-leaf-500 resize-none"
-                  />
-                </div>
+                <textarea
+                  rows={2}
+                  maxLength={400}
+                  value={notiz}
+                  onChange={(e) => setNotiz(e.target.value)}
+                  placeholder="Optional: Wunsch-Lieferzeitpunkt, Schlagname oder Notiz"
+                  className={`resize-none py-3 ${FIELD_CLASS}`}
+                />
               </div>
 
               {/* 4. Submission action buttons */}
-              <div className="space-y-3 pt-2">
+              <div className="space-y-3 border-t border-divider pt-6">
                 <button
                   type="button"
                   disabled={status === "sendet"}
                   onClick={() => handleAbsenden("verbindlich")}
-                  className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-leaf-600 px-6 text-base font-bold text-white shadow-lift transition hover:bg-leaf-700 active:bg-leaf-800 disabled:opacity-50 cursor-pointer"
+                  className={wideButtonClass("primary")}
                 >
                   {status === "sendet" && anfrageTyp === "verbindlich" ? (
                     <>
-                      <Loader2 className="size-5 animate-spin" />
+                      <Loader2 className="size-5 motion-safe:animate-spin" aria-hidden />
                       <span>Übermittle Saatgutanfrage...</span>
                     </>
                   ) : (
                     <>
-                      <CheckCircle2 className="size-5" />
+                      <CheckCircle2 className="size-5" aria-hidden />
                       <span>Saatgut verbindlich anfragen / bestellen</span>
                     </>
                   )}
                 </button>
 
-                <div className="flex items-center gap-3 text-xs text-muted justify-center">
-                  <span className="h-px flex-1 bg-line" />
+                <div className="flex items-center gap-3 text-small text-fg-muted">
+                  <span className="h-px flex-1 bg-divider" />
                   <span>oder direkt beraten lassen</span>
-                  <span className="h-px flex-1 bg-line" />
+                  <span className="h-px flex-1 bg-divider" />
                 </div>
 
                 <button
                   type="button"
                   disabled={status === "sendet"}
                   onClick={() => handleAbsenden("beratung")}
-                  className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-white px-5 text-sm font-semibold text-ink ring-1 ring-line transition hover:bg-sand-100 hover:ring-leaf-300 disabled:opacity-50 cursor-pointer"
+                  className={wideButtonClass("secondary")}
                 >
                   {status === "sendet" && anfrageTyp === "beratung" ? (
                     <>
-                      <Loader2 className="size-4 animate-spin text-leaf-800" />
+                      <Loader2 className="size-4 motion-safe:animate-spin" aria-hidden />
                       <span>Fordere Rückruf an...</span>
                     </>
                   ) : (
                     <>
-                      <Phone className="size-4 text-leaf-800" />
-                      <span>Jetzt mit NoMaze-Saatgutteam sprechen ({TEAM.telefonAnzeige})</span>
+                      <Phone className="size-4" aria-hidden />
+                      <span className="tabular-nums">Jetzt mit NoMaze-Saatgutteam sprechen ({TEAM.telefonAnzeige})</span>
                     </>
                   )}
                 </button>
 
-                <p className="text-center text-[11px] text-muted">
+                <p className="text-caption text-fg-muted">
                   🌱 Verbindliche Kontingent-Reservierung vorbehaltlich Züchter-Verfügbarkeit.
                   Dein Anbauwunsch wird automatisch in Spross hinterlegt.
                 </p>

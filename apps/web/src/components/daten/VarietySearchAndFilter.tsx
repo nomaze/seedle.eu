@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useSpross } from "@/components/spross/SprossContext";
 import { Badge } from "@/components/ui/Badge";
+import { buttonClass } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import type { BreederOption, DmkVarietyItem, VarietySearchResult } from "@/server/services/dmk";
+import { segmentClass } from "@/components/ui/Choice";
 
 interface VarietySearchAndFilterProps {
   breeders: BreederOption[];
@@ -16,6 +18,7 @@ interface VarietySearchAndFilterProps {
   onSelectVariety: (sorteId: number) => void;
   className?: string;
 }
+
 
 // Quick filter options for breeders
 const TOP_BREEDERS = [
@@ -177,8 +180,8 @@ export function VarietySearchAndFilter({
       </SectionTitle>
 
       {/* Search input bar */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-muted pointer-events-none" />
+      <div className="relative max-w-measure">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-fg-muted" aria-hidden />
         <input
           type="text"
           value={q}
@@ -187,7 +190,7 @@ export function VarietySearchAndFilter({
             setPage(0);
           }}
           placeholder="Sorte oder Züchter suchen (z. B. AW Talkrone, AckerWerk, Feldmark)..."
-          className="w-full rounded-2xl border-0 bg-white py-3.5 pl-11 pr-10 text-base font-medium text-ink ring-1 ring-line placeholder:text-muted/70 focus:ring-2 focus:ring-leaf-500 shadow-sm"
+          className="h-control w-full rounded-control border border-control bg-surface pl-11 pr-11 text-body text-fg placeholder:text-fg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
         />
         {q ? (
           <button
@@ -196,20 +199,20 @@ export function VarietySearchAndFilter({
               setQ("");
               setPage(0);
             }}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted hover:bg-sand-100 hover:text-ink"
+            className="absolute right-1.5 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-control text-fg-muted transition-colors hover:bg-highlight hover:text-fg"
             aria-label="Suchtext löschen"
           >
-            <X className="size-4" />
+            <X className="size-4" aria-hidden />
           </button>
         ) : null}
       </div>
 
       {/* Filter bar */}
-      <div className="mt-4 space-y-3 pt-2">
+      <div className="mt-6 space-y-5">
         {/* Quick breeder selector */}
         <div>
-          <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-            <Building2 className="size-3.5" /> Züchter
+          <div className="mb-2 flex items-center gap-1.5 text-small font-semibold text-fg">
+            <Building2 className="size-4 text-fg-muted" aria-hidden /> Züchter
           </div>
           <div className="flex flex-wrap items-center gap-1.5">
             {TOP_BREEDERS.map((b) => {
@@ -222,11 +225,8 @@ export function VarietySearchAndFilter({
                     setSelectedBreeder(b.value);
                     setPage(0);
                   }}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    active
-                      ? "bg-leaf-600 text-white shadow-soft"
-                      : "bg-white text-muted ring-1 ring-line hover:text-ink hover:ring-leaf-300"
-                  }`}
+                  aria-pressed={active}
+                  className={segmentClass(active)}
                 >
                   {b.label}
                 </button>
@@ -240,7 +240,8 @@ export function VarietySearchAndFilter({
                 setSelectedBreeder(e.target.value);
                 setPage(0);
               }}
-              className="rounded-full border-0 bg-white py-1 pl-3 pr-8 text-xs font-medium text-ink ring-1 ring-line hover:ring-leaf-300 focus:ring-2 focus:ring-leaf-500"
+              aria-label="Weitere Züchter"
+              className="h-control-sm cursor-pointer rounded-control border border-control bg-surface pl-3 pr-8 text-small text-fg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus"
             >
               <option value="alle">Weitere Züchter ({breeders.length})...</option>
               {breeders.map((b) => (
@@ -253,13 +254,13 @@ export function VarietySearchAndFilter({
         </div>
 
         {/* Usage and maturity groups */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
           {/* Usage direction */}
           <div>
-            <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
+            <div className="mb-2 text-small font-semibold text-fg">
               Nutzung
             </div>
-            <div className="inline-flex rounded-full bg-sand-100/70 p-1 ring-1 ring-line text-xs font-medium">
+            <div className="inline-flex flex-wrap gap-1.5">
               {[
                 ["alle", "Alle"],
                 ["silo", "Silomais"],
@@ -272,11 +273,8 @@ export function VarietySearchAndFilter({
                     setSelectedNutzung(key as "alle" | "silo" | "koerner");
                     setPage(0);
                   }}
-                  className={`rounded-full px-3 py-1 transition ${
-                    selectedNutzung === key
-                      ? "bg-white text-leaf-800 shadow-sm"
-                      : "text-muted hover:text-ink"
-                  }`}
+                  aria-pressed={selectedNutzung === key}
+                  className={segmentClass(selectedNutzung === key)}
                 >
                   {label}
                 </button>
@@ -286,10 +284,10 @@ export function VarietySearchAndFilter({
 
           {/* Maturity group */}
           <div>
-            <div className="text-xs font-semibold text-muted uppercase tracking-wider mb-1.5">
+            <div className="mb-2 text-small font-semibold text-fg">
               Reifegruppe
             </div>
-            <div className="inline-flex rounded-full bg-sand-100/70 p-1 ring-1 ring-line text-xs font-medium">
+            <div className="inline-flex flex-wrap gap-1.5">
               {[
                 ["alle", "Alle"],
                 ["frueh", "Früh (≤ 220)"],
@@ -303,11 +301,8 @@ export function VarietySearchAndFilter({
                     setSelectedReife(key as "alle" | "frueh" | "mittelfrueh" | "spaet");
                     setPage(0);
                   }}
-                  className={`rounded-full px-2.5 py-1 transition ${
-                    selectedReife === key
-                      ? "bg-white text-leaf-800 shadow-sm"
-                      : "text-muted hover:text-ink"
-                  }`}
+                  aria-pressed={selectedReife === key}
+                  className={segmentClass(selectedReife === key)}
                 >
                   {label}
                 </button>
@@ -318,14 +313,14 @@ export function VarietySearchAndFilter({
 
         {/* Active filter status and reset action */}
         {(q || selectedBreeder !== "alle" || selectedNutzung !== "alle" || selectedReife !== "alle") && (
-          <div className="flex items-center justify-between border-t border-line pt-2 text-xs">
-            <span className="text-muted">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 border-t border-divider pt-3 text-small">
+            <span className="tabular-nums text-fg-muted">
               Filter aktiv: {total} {total === 1 ? "Sorte gefunden" : "Sorten gefunden"}
             </span>
             <button
               type="button"
               onClick={handleReset}
-              className="font-medium text-poppy hover:underline"
+              className="inline-flex min-h-touch cursor-pointer items-center font-semibold text-link underline-offset-4 hover:underline"
             >
               Filter zurücksetzen
             </button>
@@ -333,44 +328,44 @@ export function VarietySearchAndFilter({
         )}
       </div>
 
-      {/* Variety card grid */}
-      <div className="mt-6">
+      {/* Variety list */}
+      <div className="mt-8">
         {isPending ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted">
-            <Loader2 className="size-6 animate-spin text-leaf-600 mb-2" />
-            <span className="text-sm">Lade Versuchsdaten...</span>
+          <div className="flex items-center gap-2 border-t border-rule py-8 text-fg-muted">
+            <Loader2 className="size-5 animate-spin text-link" aria-hidden />
+            <span className="text-small">Lade Versuchsdaten...</span>
           </div>
         ) : items.length === 0 ? (
-          <div className="rounded-2xl bg-sand-50 p-8 text-center ring-1 ring-line">
-            <p className="font-semibold text-ink">Keine Sorten gefunden</p>
-            <p className="mt-1 text-sm text-muted">
+          <div className="border-t border-rule py-8">
+            <p className="font-semibold text-fg">Keine Sorten gefunden</p>
+            <p className="mt-1 max-w-measure text-small text-fg-muted">
               Versuche andere Suchbegriffe oder setze den Züchter- bzw. Reifegruppenfilter zurück.
             </p>
             <button
               type="button"
               onClick={handleReset}
-              className="mt-4 rounded-full bg-white px-4 py-1.5 text-xs font-semibold text-leaf-700 ring-1 ring-line hover:bg-leaf-50"
+              className={buttonClass("secondary", "sm", "mt-4 cursor-pointer")}
             >
               Alle Filter aufheben
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+          <ul className="divide-y divide-divider border-y border-rule">
             {items.map((sorte) => {
               const reifeSilo = sorte.siloreifezahl ? `S ${sorte.siloreifezahl}` : null;
               const reifeKorn = sorte.koernerreifezahl ? `K ${sorte.koernerreifezahl}` : null;
               const reifeLabel = [reifeSilo, reifeKorn].filter(Boolean).join(" · ") || "Reife k.A.";
 
               return (
-                <div
+                <li
                   key={sorte.sorte_id}
                   onClick={() => onSelectVariety(sorte.sorte_id)}
-                  className="group relative flex flex-col justify-between rounded-2xl bg-white p-4 ring-1 ring-line transition hover:ring-leaf-400 hover:shadow-soft cursor-pointer"
+                  className="group -mx-2 flex cursor-pointer flex-col gap-2 px-2 py-3.5 transition-colors hover:bg-highlight sm:flex-row sm:items-center sm:justify-between sm:gap-6"
                 >
-                  <div>
-                    {/* Header: Variety name & BSA badge */}
-                    <div className="flex items-start justify-between gap-2">
-                      <h4 className="font-bold text-ink group-hover:text-leaf-700 transition">
+                  <div className="min-w-0">
+                    {/* Variety name & BSA label */}
+                    <div className="flex flex-wrap items-baseline gap-x-2">
+                      <h4 className="text-subheading text-fg transition-colors group-hover:text-link">
                         {sorte.sorte}
                       </h4>
                       {Boolean(sorte.in_aktueller_bsl) && (
@@ -380,83 +375,82 @@ export function VarietySearchAndFilter({
                       )}
                     </div>
 
-                    {/* Breeder */}
-                    <div className="mt-1 text-xs text-muted truncate" title={sorte.zuechter || ""}>
-                      {sorte.zuechter || "Züchter unbekannt"}
-                    </div>
-
-                    {/* Maturity & key traits */}
-                    <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
-                      <span className="rounded-md bg-sand-100 px-2 py-0.5 font-semibold text-ink ring-1 ring-sand-300">
+                    {/* Meta line: breeder · maturity · approval · usage */}
+                    <div className="mt-0.5 flex flex-wrap items-baseline gap-x-1.5 text-small text-fg-muted">
+                      <span className="max-w-[16rem] truncate" title={sorte.zuechter || ""}>
+                        {sorte.zuechter || "Züchter unbekannt"}
+                      </span>
+                      <span aria-hidden>·</span>
+                      <span className="font-semibold tabular-nums text-fg">
                         {reifeLabel}
                       </span>
                       {sorte.zulassungsjahr && (
-                        <span className="rounded-md bg-white px-2 py-0.5 text-muted ring-1 ring-line">
-                          Zulassung {sorte.zulassungsjahr}
-                        </span>
+                        <>
+                          <span aria-hidden>·</span>
+                          <span className="tabular-nums">Zulassung {sorte.zulassungsjahr}</span>
+                        </>
                       )}
-                    </div>
-
-                    {/* Usage tags */}
-                    <div className="mt-2.5 flex flex-wrap gap-1">
                       {Boolean(sorte.nutzung_silo) && (
-                        <span className="text-[11px] font-medium text-leaf-800 bg-leaf-50 px-1.5 py-0.5 rounded">
-                          Silomais
-                        </span>
+                        <>
+                          <span aria-hidden>·</span>
+                          <span>Silomais</span>
+                        </>
                       )}
                       {Boolean(sorte.nutzung_koerner) && (
-                        <span className="text-[11px] font-medium text-ink bg-sand-100 px-1.5 py-0.5 rounded">
-                          Körnermais
-                        </span>
+                        <>
+                          <span aria-hidden>·</span>
+                          <span>Körnermais</span>
+                        </>
                       )}
                       {Boolean(sorte.nutzung_biogas) && (
-                        <span className="text-[11px] font-medium text-bee-text bg-bee-soft px-1.5 py-0.5 rounded">
-                          Biogas
-                        </span>
+                        <>
+                          <span aria-hidden>·</span>
+                          <span>Biogas</span>
+                        </>
                       )}
                     </div>
                   </div>
 
-                  {/* Action footer link */}
-                  <div className="mt-4 pt-3 border-t border-line/60 flex items-center justify-between text-xs">
-                    <span className="font-semibold text-leaf-700 group-hover:underline inline-flex items-center gap-1">
-                      Steckbrief öffnen <ChevronRight className="size-3" />
+                  {/* Actions */}
+                  <div className="flex shrink-0 items-center gap-5 text-small">
+                    <span className="inline-flex items-center gap-1 font-semibold text-link underline-offset-4 group-hover:underline">
+                      Steckbrief öffnen <ChevronRight className="size-4" aria-hidden />
                     </span>
                     <Link
                       href="/feld"
                       onClick={(e) => e.stopPropagation()}
-                      className="font-medium text-muted hover:text-leaf-800 hover:underline"
+                      className="inline-flex min-h-touch items-center text-fg-muted underline-offset-4 hover:text-link hover:underline"
                     >
                       Auf Schlag testen
                     </Link>
                   </div>
-                </div>
+                </li>
               );
             })}
-          </div>
+          </ul>
         )}
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-between border-t border-line pt-4 text-sm">
+          <div className="mt-6 flex items-center justify-between gap-4 text-small">
             <button
               type="button"
               disabled={page === 0}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
-              className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink ring-1 ring-line transition hover:bg-leaf-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className={buttonClass("secondary", "sm", "cursor-pointer")}
             >
-              <ChevronLeft className="size-4" /> Vorherige
+              <ChevronLeft className="size-4" aria-hidden /> Vorherige
             </button>
-            <span className="text-xs text-muted">
+            <span className="tabular-nums text-fg-muted">
               Seite {page + 1} von {totalPages}
             </span>
             <button
               type="button"
               disabled={page >= totalPages - 1}
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-              className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink ring-1 ring-line transition hover:bg-leaf-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className={buttonClass("secondary", "sm", "cursor-pointer")}
             >
-              Nächste <ChevronRight className="size-4" />
+              Nächste <ChevronRight className="size-4" aria-hidden />
             </button>
           </div>
         )}

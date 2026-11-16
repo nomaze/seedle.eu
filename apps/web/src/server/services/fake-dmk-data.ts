@@ -1,3 +1,4 @@
+import { createDemoProviders } from "@seedle/core";
 import type {
   DmkRegionMeta,
   DmkVarietyDetail,
@@ -730,12 +731,148 @@ export function fakeBreedersList(): BreederOption[] {
 }
 
 export function fakeVarietyDetail(idOrName: string | number): DmkVarietyDetail | null {
-  const norm = String(idOrName).trim().toLowerCase();
-  const found = FAKE_VARIETY_DETAILS.find(
+  const rawStr = String(idOrName ?? "").trim();
+  if (!rawStr) return null;
+  const norm = rawStr.toLowerCase();
+
+  // 1. Direct match in FAKE_VARIETY_DETAILS by numeric ID, exact name, or slug
+  const direct = FAKE_VARIETY_DETAILS.find(
     (d) =>
       String(d.sorte.sorte_id) === norm ||
       d.sorte.sorte.toLowerCase() === norm ||
-      d.sorte.sorte.toLowerCase().replace(/\s+/g, "-") === norm
+      d.sorte.sorte.toLowerCase().replace(/\s+/g, "-") === norm,
   );
-  return found ? JSON.parse(JSON.stringify(found)) : null;
+  if (direct) {
+    return JSON.parse(JSON.stringify(direct)) as DmkVarietyDetail;
+  }
+
+  // 2. Match against DEMO_VARIETIES from @seedle/core (e.g. "ah-bernstein" -> "Auenhof Bernstein")
+  const catalog = createDemoProviders().catalog;
+  const allDemoVarieties = catalog.varieties();
+  const demoMatch = allDemoVarieties.find(
+    (v) =>
+      v.id.toLowerCase() === norm ||
+      v.name.toLowerCase() === norm ||
+      v.name.toLowerCase().replace(/\s+/g, "-") === norm,
+  );
+  if (demoMatch) {
+    const byDemoName = FAKE_VARIETY_DETAILS.find(
+      (d) => d.sorte.sorte.toLowerCase() === demoMatch.name.toLowerCase(),
+    );
+    if (byDemoName) {
+      return JSON.parse(JSON.stringify(byDemoName)) as DmkVarietyDetail;
+    }
+
+    const breeder = catalog.breeders().find((b) => b.id === demoMatch.breederId);
+    const synthRaw: RawVarietyData = {
+      sorte_id: 200 + allDemoVarieties.indexOf(demoMatch),
+      sorte: demoMatch.name,
+      zuechter: breeder?.name ?? "Züchterhaus",
+      zulassung: `DE ${demoMatch.zulassungsjahr}`,
+      zulassungsjahr: demoMatch.zulassungsjahr,
+      siloreifezahl: demoMatch.reifezahl,
+      koernerreifezahl: demoMatch.reifezahl,
+      nutzung_silo: demoMatch.usages.includes("silomais") ? 1 : 0,
+      nutzung_koerner: demoMatch.usages.includes("koernermais") ? 1 : 0,
+      nutzung_biogas: demoMatch.usages.includes("silomais") ? 1 : 0,
+      hybridtyp: "Einfachhybride",
+      korntyp: demoMatch.reifezahl <= 230 ? "Hartmais-betont" : "Zwischentyp",
+      notiz: demoMatch.kurzbeschreibung,
+      relErtragSilo: 103.2,
+      relErtragKorn: 103.5,
+    };
+    const bslHistory = generateBslHistory(synthRaw);
+    const trials = generateTrials(synthRaw);
+    return {
+      sorte: {
+        sorte_id: synthRaw.sorte_id,
+        sorte: synthRaw.sorte,
+        zuechter: synthRaw.zuechter,
+        zulassung: synthRaw.zulassung,
+        zulassungsjahr: synthRaw.zulassungsjahr,
+        zulassungsland: "DE",
+        siloreifezahl: synthRaw.siloreifezahl,
+        koernerreifezahl: synthRaw.koernerreifezahl,
+        nutzung_silo: synthRaw.nutzung_silo,
+        nutzung_koerner: synthRaw.nutzung_koerner,
+        nutzung_biogas: synthRaw.nutzung_biogas,
+        hybridtyp: synthRaw.hybridtyp,
+        korntyp: synthRaw.korntyp,
+        in_aktueller_bsl: 1,
+        notiz: synthRaw.notiz,
+      },
+      bsl: {
+        latest: bslHistory[bslHistory.length - 1] ?? null,
+        history: bslHistory,
+      },
+      trials: {
+        totalCount: trials.recentTrials.length * 6,
+        byRegion: trials.byRegion,
+        recentTrials: trials.recentTrials,
+      },
+    };
+  }
+
+  // 3. Fallback synthesis for any other variety slug/name (e.g. "kws-stabilo", "agrogant")
+  const readableName = rawStr.includes("-")
+    ? rawStr
+        .split("-")
+        .map((part) =>
+          part.length <= 3 ? part.toUpperCase() : part.charAt(0).toUpperCase() + part.slice(1),
+        )
+        .join(" ")
+    : rawStr;
+  const fallbackRaw: RawVarietyData = {
+    sorte_id: 900,
+    sorte: readableName,
+    zuechter: readableName.startsWith("KWS")
+      ? "KWS Saat SE"
+      : readableName.startsWith("LG")
+        ? "Limagrain"
+        : readableName.startsWith("DKC")
+          ? "Bayer / Dekalb"
+          : "Geprüfte Saatzucht",
+    zulassung: "DE 2022",
+    zulassungsjahr: 2022,
+    siloreifezahl: 240,
+    koernerreifezahl: 240,
+    nutzung_silo: 1,
+    nutzung_koerner: 1,
+    nutzung_biogas: 1,
+    hybridtyp: "Einfachhybride",
+    korntyp: "Zwischentyp",
+    notiz: "Mehrjährig in Landessortenversuchen und BSA-Prüfungen getestete Maissorte mit hoher Umweltstabilität.",
+    relErtragSilo: 103.4,
+    relErtragKorn: 103.1,
+  };
+  const bslHistory = generateBslHistory(fallbackRaw);
+  const trials = generateTrials(fallbackRaw);
+  return {
+    sorte: {
+      sorte_id: fallbackRaw.sorte_id,
+      sorte: fallbackRaw.sorte,
+      zuechter: fallbackRaw.zuechter,
+      zulassung: fallbackRaw.zulassung,
+      zulassungsjahr: fallbackRaw.zulassungsjahr,
+      zulassungsland: "DE",
+      siloreifezahl: fallbackRaw.siloreifezahl,
+      koernerreifezahl: fallbackRaw.koernerreifezahl,
+      nutzung_silo: fallbackRaw.nutzung_silo,
+      nutzung_koerner: fallbackRaw.nutzung_koerner,
+      nutzung_biogas: fallbackRaw.nutzung_biogas,
+      hybridtyp: fallbackRaw.hybridtyp,
+      korntyp: fallbackRaw.korntyp,
+      in_aktueller_bsl: 1,
+      notiz: fallbackRaw.notiz,
+    },
+    bsl: {
+      latest: bslHistory[bslHistory.length - 1] ?? null,
+      history: bslHistory,
+    },
+    trials: {
+      totalCount: trials.recentTrials.length * 6,
+      byRegion: trials.byRegion,
+      recentTrials: trials.recentTrials,
+    },
+  };
 }

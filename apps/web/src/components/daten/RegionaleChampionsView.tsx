@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  ChevronLeft,
   MapPin,
   Search,
   Trophy,
 } from "lucide-react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { PageHeader } from "@/components/shell/PageHeader";
 import { useSpross } from "@/components/spross/SprossContext";
 import { lookupPlzOffline } from "@/lib/plz";
 import type {
@@ -175,60 +174,54 @@ export function RegionaleChampionsView({
   const backUrl = urlPlz ? `/daten?plz=${encodeURIComponent(urlPlz)}` : "/daten";
 
   return (
-    <div className="seite-breit space-y-6 sm:space-y-8">
+    <div>
       {/* 1. Header with location confirmation and back navigation */}
-      <header className="pt-1 sm:pt-2">
-        <div className="flex items-center justify-between gap-4">
-          <Link
-            href={backUrl}
-            className="inline-flex h-9 items-center gap-1 rounded-full bg-white/90 pl-2 pr-3.5 text-xs sm:text-sm font-semibold text-ink ring-1 ring-line hover:ring-leaf-300 hover:bg-white transition shadow-sm"
-          >
-            <ChevronLeft className="size-4 text-leaf-700" />
-            <span>Standort ändern</span>
-          </Link>
-
-          {locationLabel && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-leaf-50 px-3 py-1 text-xs font-semibold text-leaf-800 ring-1 ring-leaf-200">
-              <MapPin className="size-3 text-leaf-700" />
-              {locationLabel}
-            </span>
-          )}
-        </div>
-
-        <div className="mt-4">
-          <div className="text-xs font-bold uppercase tracking-wider text-leaf-700">
-            Regionale Sortenversuche (Demo-Datensatz)
-          </div>
-          <h1 className="mt-1 text-2xl font-bold leading-tight tracking-tight text-ink sm:text-4xl">
-            Versuchsergebnisse für {stats.region.name}
-          </h1>
-          <p className="mt-2 text-xs sm:text-sm text-muted">
+      <PageHeader
+        back={{ href: backUrl, label: "Standort ändern" }}
+        eyebrow={
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span>Regionale Sortenversuche (Demo-Datensatz)</span>
+            {locationLabel && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1 tabular-nums text-fg">
+                  <MapPin className="size-4 text-link" aria-hidden />
+                  {locationLabel}
+                </span>
+              </>
+            )}
+          </span>
+        }
+        title={<>Versuchsergebnisse für {stats.region.name}</>}
+        lead={
+          <>
             Basiert auf{" "}
-            <strong className="text-ink font-semibold">
+            <strong className="font-semibold text-fg">
               {stats.totals.max_standorte} regionalen Versuchsstandorten (Demo-Datensatz)
             </strong>{" "}
-            · {stats.totals.min_jahr}–
-            {stats.totals.max_jahr} ({stats.totals.datenpunkte.toLocaleString("de-DE")} Datenpunkte)
-          </p>
-        </div>
-      </header>
+            · <span className="tabular-nums">{stats.totals.min_jahr}–
+            {stats.totals.max_jahr} ({stats.totals.datenpunkte.toLocaleString("de-DE")} Datenpunkte)</span>
+          </>
+        }
+      />
 
       {/* 2. Navigation tabs: regional champions (default) vs full variety catalog */}
       <section aria-label="Sortenergebnisse">
-        <div className="flex border-b border-line gap-2 sm:gap-6 overflow-x-auto">
+        <div className="flex gap-6 overflow-x-auto border-b border-divider sm:gap-8">
           <button
             type="button"
             onClick={() => setActiveTab("regional")}
-            className={`flex items-center gap-2 pb-3.5 text-sm sm:text-base font-bold transition border-b-2 -mb-px whitespace-nowrap cursor-pointer ${
+            aria-pressed={activeTab === "regional"}
+            className={`-mb-px flex min-h-touch cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 pb-2 text-body font-semibold transition-colors ${
               activeTab === "regional"
-                ? "border-leaf-600 text-leaf-800"
-                : "border-transparent text-muted hover:text-ink"
+                ? "border-selected text-fg"
+                : "border-transparent text-fg-muted hover:text-fg"
             }`}
           >
-            <Trophy className="size-4 text-sun-600" />
+            <Trophy className="size-4" aria-hidden />
             <span>Regionale Spitzenreiter</span>
             {stats.topSorten && (
-              <span className="rounded-full bg-leaf-100 px-2 py-0.5 text-xs text-leaf-800 font-semibold font-mono tabular-nums">
+              <span className="text-small font-normal tabular-nums text-fg-muted">
                 {stats.topSortenSilo?.length ?? stats.topSorten.length} Sorten
               </span>
             )}
@@ -237,20 +230,21 @@ export function RegionaleChampionsView({
           <button
             type="button"
             onClick={() => setActiveTab("katalog")}
-            className={`flex items-center gap-2 pb-3.5 text-sm sm:text-base font-bold transition border-b-2 -mb-px whitespace-nowrap cursor-pointer ${
+            aria-pressed={activeTab === "katalog"}
+            className={`-mb-px flex min-h-touch cursor-pointer items-center gap-2 whitespace-nowrap border-b-2 pb-2 text-body font-semibold transition-colors ${
               activeTab === "katalog"
-                ? "border-leaf-600 text-leaf-800"
-                : "border-transparent text-muted hover:text-ink"
+                ? "border-selected text-fg"
+                : "border-transparent text-fg-muted hover:text-fg"
             }`}
           >
-            <Search className="size-4" />
+            <Search className="size-4" aria-hidden />
             <span>Alle Sorten im Gesamtkatalog durchsuchen</span>
           </button>
         </div>
 
         {/* Tab 1: Regional metrics, usage toggle, table & sticky panel */}
         {activeTab === "regional" && (
-          <div className="mt-6 space-y-6">
+          <div className="mt-8">
             <RegionalSummaryCard
               stats={stats}
               selectedVarietyId={selectedVarietyId}
@@ -265,12 +259,12 @@ export function RegionaleChampionsView({
 
         {/* Tab 2: Full catalog & free text search */}
         {activeTab === "katalog" && (
-          <div className="mt-6 space-y-4">
+          <div className="mt-6 space-y-6">
             <div className="flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => setActiveTab("regional")}
-                className="inline-flex items-center gap-1.5 text-xs font-semibold text-leaf-700 hover:text-leaf-900 transition cursor-pointer"
+                className="-ml-1 inline-flex min-h-touch cursor-pointer items-center gap-1.5 rounded-control px-1 text-small font-semibold text-link underline-offset-4 transition-colors hover:underline"
               >
                 ← Zurück zu den Top-Sorten für {stats.region.name}
               </button>
