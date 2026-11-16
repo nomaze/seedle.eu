@@ -86,16 +86,28 @@ export function DatenschutzContent() {
               : "Vector map tiles and style specifications for map rendering (map data © OpenStreetMap contributors, Open Database License ODbL)."}
           </li>
           <li>
-            <strong className="text-fg">Esri World Imagery (<code className="font-sans text-fg">server.arcgisonline.com</code>):</strong>{" "}
+            <strong className="text-fg">Esri World Imagery (<code className="font-sans text-fg">server.arcgisonline.com</code>, Esri Inc., Redlands, CA, USA):</strong>{" "}
             {isDe
-              ? "Satelliten-Luftbildkacheln bei aktivierter Satellitenansicht (Esri, Maxar, Earthstar Geographics, USDA FSA, USGS, Aerogrid, IGN, IGP und die GIS User Community)."
-              : "Satellite aerial imagery tiles when satellite view is enabled (Esri, Maxar, Earthstar Geographics, USDA FSA, USGS, Aerogrid, IGN, IGP, and the GIS User Community)."}
+              ? "Satelliten-Luftbildkacheln bei aktivierter Satellitenansicht (Esri, Maxar, Earthstar Geographics, USDA FSA, USGS, Aerogrid, IGN, IGP und die GIS User Community). Datenübermittlung in ein Drittland (USA) gemäß Art. 45 / Art. 46 DSGVO (EU-U.S. Data Privacy Framework bzw. EU-Standardvertragsklauseln / SCCs) sowie als technisch erforderlicher Abruf zur Kartendarstellung auf Nutzerwunsch gemäß Art. 49 Abs. 1 lit. b DSGVO."
+              : "Satellite aerial imagery tiles when satellite view is enabled (Esri, Maxar, Earthstar Geographics, USDA FSA, USGS, Aerogrid, IGN, IGP, and the GIS User Community). Third-country data transfer (USA) pursuant to Art. 45 / Art. 46 GDPR (EU-U.S. Data Privacy Framework and/or EU Standard Contractual Clauses / SCCs) and as a technically necessary request to render the map at the user's request pursuant to Art. 49(1)(b) GDPR."}
           </li>
           <li>
-            <strong className="text-fg">Source Cooperative / fiboa (<code className="font-sans text-fg">data.source.coop</code>):</strong>{" "}
+            <strong className="text-fg">Source Cooperative / fiboa (<code className="font-sans text-fg">data.source.coop</code>, Radiant Earth / US-Cloud-Infrastruktur):</strong>{" "}
             {isDe
-              ? "Offizielle anonymisierte landwirtschaftliche Feldblock-Vektorkacheln (PMTiles via HTTP Range Requests) unter Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0), dl-de/zero-2-0 und CC-BY-4.0."
-              : "Official anonymized agricultural field boundary vector tiles (PMTiles via HTTP Range Requests) licensed under Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0), dl-de/zero-2-0, and CC-BY-4.0."}
+              ? "Offizielle anonymisierte landwirtschaftliche Feldblock-Vektorkacheln (PMTiles via HTTP Range Requests) unter Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0), dl-de/zero-2-0 und CC-BY-4.0. Datenübermittlung in ein Drittland (USA) gemäß Art. 45 / Art. 46 DSGVO (EU-U.S. Data Privacy Framework bzw. EU-Standardvertragsklauseln / SCCs) sowie als technisch erforderlicher Abruf zur Kartendarstellung auf Nutzerwunsch gemäß Art. 49 Abs. 1 lit. b DSGVO."
+              : "Official anonymized agricultural field boundary vector tiles (PMTiles via HTTP Range Requests) licensed under Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0), dl-de/zero-2-0, and CC-BY-4.0. Third-country data transfer (USA) pursuant to Art. 45 / Art. 46 GDPR (EU-U.S. Data Privacy Framework and/or EU Standard Contractual Clauses / SCCs) and as a technically necessary request to render the map at the user's request pursuant to Art. 49(1)(b) GDPR."}
+          </li>
+          <li>
+            <strong className="text-fg">Geobasis NRW / OGC API Features (<code className="font-sans text-fg">ogc-api.nrw.de</code>, Land Nordrhein-Westfalen):</strong>{" "}
+            {isDe
+              ? "Abruf amtlicher INSPIRE-Feldblock- und Landnutzungsgeometrien bei Klick auf einen Schlag in Nordrhein-Westfalen (Übertragung von IP-Adresse und Klickkoordinate, Rechtsgrundlage Art. 6 Abs. 1 lit. b und f DSGVO)."
+              : "Retrieval of official INSPIRE field block and land-use geometries when clicking a field parcel in North Rhine-Westphalia (transmission of IP address and click coordinates, legal basis Art. 6(1)(b) and (f) GDPR)."}
+          </li>
+          <li>
+            <strong className="text-fg">OpenStreetMap Overpass API (<code className="font-sans text-fg">overpass-api.de</code> &amp; Mirror <code className="font-sans text-fg">overpass.kumi.systems</code>):</strong>{" "}
+            {isDe
+              ? "Abfrage von Acker- und Schlagumrissen (landuse=farmland) bei Kartenklick in /feld/neu, falls kein amtlicher Landes-Feldblock vorliegt (Übertragung von IP-Adresse und Bounding-Box/Koordinate, Rechtsgrundlage Art. 6 Abs. 1 lit. b und f DSGVO)."
+              : "Querying of farmland and parcel boundaries (landuse=farmland) upon map click in /feld/neu when no official state field block is available (transmission of IP address and bounding box/coordinates, legal basis Art. 6(1)(b) and (f) GDPR)."}
           </li>
           <li>
             <strong className="text-fg">OpenStreetMap Nominatim (<code className="font-sans text-fg">nominatim.openstreetmap.org</code>):</strong>{" "}
@@ -179,10 +191,22 @@ export function DatenschutzContent() {
               : "Stores the active user session profile and locally created parcel geometries in your browser. Storage duration: Until logout or clearing browser storage."}
           </li>
           <li>
-            <strong className="text-fg">localStorage <code className="font-sans text-fg">seedle_field_agronomy_v1_*</code>:</strong>{" "}
+            <strong className="text-fg">localStorage <code className="font-sans text-fg">seedle_agronomy_profile_v1_*</code> &amp; <code className="font-sans text-fg">seedle_field_agronomy_v1_*</code>:</strong>{" "}
             {isDe
-              ? "Speichert je Schlag lokal im Browser zwischengespeicherte agronomische Profildaten (z. B. feldspezifische Auswertungen und Historien) zur schnelleren Wiederverwendung. Speicherdauer: Lokal bis zur Löschung Ihres Browserspeichers."
-              : "Stores locally cached per-field agronomy profile data in your browser (e.g. field-specific evaluations and histories) for faster reuse. Storage duration: Locally until you clear your browser storage."}
+              ? "Lokale Speicherung der vom Nutzer eingegebenen Boden-, Vorfrucht- und Anbauparameter sowie feldspezifischer agronomischer Profildaten je Schlag zur schnelleren Wiederverwendung. Speicherdauer: Lokal bis zur Löschung Ihres Browserspeichers."
+              : "Local storage of user-entered soil, preceding crop, and cultivation parameters as well as cached per-field agronomy profile data for faster reuse. Storage duration: Locally until you clear your browser storage."}
+          </li>
+          <li>
+            <strong className="text-fg">localStorage &amp; sessionStorage <code className="font-sans text-fg">seedle_active_farm_scope</code>:</strong>{" "}
+            {isDe
+              ? "Speichert den aktiven Betriebs- bzw. Schlag-Kontext während der Nutzung. Speicherdauer: In sessionStorage bis zum Schließen des Browser-Tabs bzw. in localStorage bis zur Abmeldung oder Löschung Ihres Browserspeichers."
+              : "Stores the active farm and field scope context during usage. Storage duration: In sessionStorage until the browser tab is closed, and in localStorage until logout or clearing your browser storage."}
+          </li>
+          <li>
+            <strong className="text-fg">localStorage <code className="font-sans text-fg">seedle.pending_intakes</code> &amp; <code className="font-sans text-fg">seedle.pending_bug_reports</code>:</strong>{" "}
+            {isDe
+              ? "Lokaler Offline-Zwischenspeicher für Schlag-Eingaben und freiwillige Fehlermeldungen bei fehlender Serververbindung. Speicherdauer: Lokal bis zur erfolgreichen Synchronisation oder Löschung Ihres Browserspeichers."
+              : "Local offline buffer for field intake entries and voluntary bug reports when server connectivity is unavailable. Storage duration: Locally until successful synchronization or until you clear your browser storage."}
           </li>
           <li>
             <strong className="text-fg">localStorage <code className="font-sans text-fg">nomaze_telefon</code>:</strong>{" "}
