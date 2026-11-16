@@ -155,6 +155,7 @@ export async function checkBackendHealth(): Promise<{ isOnline: boolean; health?
     const response = await fetch(`${baseUrl}/api/v1/health`, {
       method: "GET",
       headers: { Accept: "application/json" },
+      cache: "no-store",
       signal: controller.signal,
     });
     clearTimeout(timeoutId);

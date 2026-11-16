@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useSpross } from "@/components/spross/SprossContext";
 import { Badge } from "@/components/ui/Badge";
@@ -81,6 +82,9 @@ export interface FieldRankingViewProps {
   rec: Recommendation;
   sortierung: ScenarioId | "gewichtet";
   standardVarietyId?: string;
+  scope?: "farm" | "field";
+  totalFarmHa?: number;
+  farmFieldsCount?: number;
 }
 
 export type RiskAppetiteLevel = 1 | 2 | 3;
@@ -1203,13 +1207,43 @@ export function FieldRankingView({
   rec,
   sortierung,
   standardVarietyId,
+  scope: propScope,
+  totalFarmHa,
+  farmFieldsCount,
 }: FieldRankingViewProps): React.JSX.Element {
   const { updatePageState, registerActionHandler, setActiveVariety } = useSpross();
+  const searchParams = useSearchParams();
+  const queryScope = searchParams?.get("scope");
+  const queryUsage = searchParams?.get("usage");
+  const queryTotalHa = Number(searchParams?.get("totalHa"));
+  const queryFieldsCount = Number(searchParams?.get("fieldsCount"));
 
-  const rawUsage: AgronomyUsageOption = normalizeAgronomyUsage(field.usage);
+  const isFarmScope =
+    propScope === "farm" ||
+    queryScope === "farm" ||
+    (typeof totalFarmHa === "number" && totalFarmHa > 0) ||
+    (Number.isFinite(queryTotalHa) && queryTotalHa > 0);
+
+  const rawUsage: AgronomyUsageOption = normalizeAgronomyUsage(
+    isFarmScope && queryUsage ? queryUsage : field.usage || queryUsage,
+  );
   const usage: Usage = rawUsage === "koernermais" ? "koernermais" : "silomais";
   const usageDisplayLabel = getAgronomyUsageLabel(rawUsage);
-  const fieldHektar = field.hektar ?? field.areaHa;
+  const fieldHektar =
+    typeof totalFarmHa === "number" && totalFarmHa > 0
+      ? totalFarmHa
+      : Number.isFinite(queryTotalHa) && queryTotalHa > 0
+        ? queryTotalHa
+        : field.hektar ?? field.areaHa;
+  const effectiveFieldsCount =
+    typeof farmFieldsCount === "number" && farmFieldsCount > 0
+      ? farmFieldsCount
+      : Number.isFinite(queryFieldsCount) && queryFieldsCount > 0
+        ? queryFieldsCount
+        : 7;
+  const displayTargetName = isFarmScope
+    ? `Gesamter Betrieb (${effectiveFieldsCount} Schläge)`
+    : field.name;
 
   // Initialize with SSR-identical defaults so server HTML and first client render match 1:1,
   // then hydrate stored localStorage profile inside useEffect after mount.
@@ -2036,7 +2070,7 @@ export function FieldRankingView({
     <div className="space-y-6">
       {/* Dedicated 1-Page Kitchen Table Print Sheet (visible on print / PDF export) */}
       <KitchenTablePrintSheet
-        fieldName={field.name}
+        fieldName={displayTargetName}
         fieldAreaHa={fieldHektar}
         region={field.env.region}
         usageLabel={usageDisplayLabel}
@@ -2047,14 +2081,28 @@ export function FieldRankingView({
 
       {/* Interactive screen view (hidden when printing) */}
       <div className="print:hidden space-y-10">
+        {isFarmScope ? (
+          <div
+            data-testid="ranking-farm-scope-banner"
+            className="flex flex-wrap items-center justify-between gap-2 rounded-panel border-2 border-selected bg-highlight px-4 py-3 text-small font-semibold text-fg"
+          >
+            <span>
+              Sortenempfehlung 2027 für deinen gesamten Betrieb · {num(fieldHektar)} ha Gesamtfläche ({effectiveFieldsCount} Schläge)
+            </span>
+            <Badge tone="leaf">Betriebsweite Planung ({num(fieldHektar)} ha)</Badge>
+          </div>
+        ) : null}
+
         {/* 1. Short Field Recap Banner + Kitchen Table PDF Export button at the top */}
         <div className="flex flex-wrap items-center justify-between gap-3 border-y border-divider py-4">
           <div className="space-y-1 min-w-0">
             <div className="text-small text-fg-muted">
-              Dein Schlag-Profil · {usageDisplayLabel}
+              {isFarmScope
+                ? `Dein Betriebs-Profil (${effectiveFieldsCount} Schläge) · ${usageDisplayLabel}`
+                : `Dein Schlag-Profil · ${usageDisplayLabel}`}
             </div>
             <div className="text-small sm:text-body font-semibold text-fg">
-              {field.name} · {num(fieldHektar)} ha · {recapSummary}
+              {displayTargetName} · {num(fieldHektar)} ha · {recapSummary}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 shrink-0">

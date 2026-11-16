@@ -2,25 +2,17 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 import type { Polygon } from "@seedle/core";
-import { areaHa, centroid, distanceKm } from "@seedle/core/geo";
-import { Home } from "lucide-react";
-import type { FilterSpecification, GeoJSONSource, Map as MlMap, Marker } from "maplibre-gl";
+import { centroid } from "@seedle/core/geo";
+import type { GeoJSONSource, Map as MlMap, Marker } from "maplibre-gl";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { StatusShape } from "@/components/ui/StatusMarker";
-import { REAL_FREISING_FIBOA_CLUSTER_IDS } from "@/server/db/real-freising-fiboa-fields";
-import {
-  buildFiboaIdFilterExpression,
-  extractFiboaFeatureId,
-  stitchPolygonRingsList,
-} from "./FieldPicker";
+import { num } from "@/lib/format";
 import { loadMaplibre } from "./loadMaplibre";
 import {
   attachMapErrorShield,
   DEUTSCHLAND,
   FIBOA_PMTILES_URL,
   LUFTBILD,
-  themaFarbe,
 } from "./styles";
 
 export interface HofMapField {
@@ -51,234 +43,38 @@ export interface HofMapProps {
   onSelectField?: (fieldId: string) => void;
 }
 
-interface FiboaCandidateParcel {
-  fiboaId: string;
-  rings: [number, number][][];
-  polygon: Polygon;
-  center: { lat: number; lon: number };
-  areaHa: number;
-}
-
-function minBoundaryDistanceDeg(polyA: Polygon, polyB: Polygon): number {
-  const ringA = polyA.coordinates[0] ?? [];
-  const ringB = polyB.coordinates[0] ?? [];
-  let minD = Infinity;
-  for (let i = 0; i < ringA.length; i++) {
-    const a = ringA[i]!;
-    for (let j = 0; j < ringB.length; j++) {
-      const b = ringB[j]!;
-      const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-      if (d < minD) minD = d;
-    }
-  }
-  return minD;
-}
-
 /**
- * Queries the loaded `fiboa-fields` vector tiles in `HofMap` and builds contiguous,
- * non-overlapping field blocks by merging adjacent sub-parcels around each farm field's anchor point.
- * Eliminates small-parcel patchwork ("Flickenteppich") and snaps every farm field 100% flush
- * to the official `fiboa` satellite field edges.
+ * Computes the exact bounding box `[minLon, minLat, maxLon, maxLat]` across all field polygon vertices.
  */
-function resolveContiguousFiboaClustersForFarm(
-  m: MlMap,
+export function computeFieldsBoundingBox(
   fields: HofMapField[],
-): {
-  selectedFiboaIds: string[];
-  fiboaIdToFieldId: Map<string, string>;
-  snappedFeatures: Array<{
-    type: "Feature";
-    id: string;
-    properties: {
-      id: string;
-      name: string;
-      status: string;
-      areaHa: number;
-      crop: string;
-      usage: string;
-    };
-    geometry: Polygon;
-  }>;
-} | null {
-  const rawFeatures: Array<{
-    id?: string | number;
-    properties?: Record<string, unknown>;
-    geometry?: { type?: string; coordinates?: unknown };
-  }> = [];
-
-  try {
-    if (m.getLayer?.("fiboa-fields-fill")) {
-      const rendered = m.queryRenderedFeatures?.(undefined, {
-        layers: ["fiboa-fields-fill"],
-      });
-      if (Array.isArray(rendered)) rawFeatures.push(...rendered);
-    }
-  } catch {
-    // Ignore in headless test mocks
-  }
-
-  try {
-    const sourceFeats = m.querySourceFeatures?.("fiboa-fields", {
-      sourceLayer: "fields",
-    });
-    if (Array.isArray(sourceFeats)) rawFeatures.push(...sourceFeats);
-  } catch {
-    // Ignore in headless test mocks
-  }
-
-  if (rawFeatures.length === 0) return null;
-
-  // Group outer rings by fiboa feature ID so MVT tile-split fragments of the same parcel are unified first
-  const ringsByFiboaId = new Map<string, [number, number][][]>();
-  for (const feat of rawFeatures) {
-    if (!feat?.geometry) continue;
-    const fid = extractFiboaFeatureId(feat);
-    if (!fid) continue;
-    const geom = feat.geometry;
-    const list = ringsByFiboaId.get(fid) ?? [];
-    if (geom.type === "Polygon" && Array.isArray(geom.coordinates) && geom.coordinates[0]) {
-      list.push(geom.coordinates[0] as [number, number][]);
-    } else if (geom.type === "MultiPolygon" && Array.isArray(geom.coordinates)) {
-      for (const polyCoords of geom.coordinates as unknown[][]) {
-        if (Array.isArray(polyCoords) && polyCoords[0]) {
-          list.push(polyCoords[0] as [number, number][]);
-        }
-      }
-    }
-    if (list.length > 0) {
-      ringsByFiboaId.set(fid, list);
-    }
-  }
-
-  const candidates: FiboaCandidateParcel[] = [];
-  for (const [fiboaId, rings] of ringsByFiboaId.entries()) {
-    const stitched = stitchPolygonRingsList(rings);
-    if (!stitched) continue;
-    const ha = areaHa(stitched);
-    if (!Number.isFinite(ha) || ha < 0.25 || ha > 65) continue;
-    candidates.push({
-      fiboaId,
-      rings,
-      polygon: stitched,
-      center: centroid(stitched),
-      areaHa: ha,
-    });
-  }
-
-  if (candidates.length === 0) return null;
-
-  const usedFiboaIds = new Set<string>();
-  const selectedFiboaIds: string[] = [];
-  const fiboaIdToFieldId = new Map<string, string>();
-  const snappedFeatures: Array<{
-    type: "Feature";
-    id: string;
-    properties: {
-      id: string;
-      name: string;
-      status: string;
-      areaHa: number;
-      crop: string;
-      usage: string;
-    };
-    geometry: Polygon;
-  }> = [];
+): [number, number, number, number] | null {
+  let minLon = Infinity;
+  let maxLon = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  let count = 0;
 
   for (const f of fields) {
-    const targetCenter = centroid(f.geometry);
-    const targetHa = Math.max(8, f.areaHa || 14);
-
-    // 1. Pick the unused fiboa parcel closest to this farm field's anchor point (preferring parcels >= 1.5 ha)
-    const available = candidates.filter((c) => !usedFiboaIds.has(c.fiboaId));
-    if (available.length === 0) {
-      snappedFeatures.push({
-        type: "Feature",
-        id: f.id,
-        properties: {
-          id: f.id,
-          name: f.name,
-          status: f.status ?? "status-ok",
-          areaHa: f.areaHa,
-          crop: f.crop ?? "Mais",
-          usage: f.usage ?? "",
-        },
-        geometry: f.geometry,
-      });
-      continue;
-    }
-
-    available.sort((a, b) => {
-      const dA = distanceKm(targetCenter, a.center) - (a.areaHa >= 2.0 ? 0.08 : 0);
-      const dB = distanceKm(targetCenter, b.center) - (b.areaHa >= 2.0 ? 0.08 : 0);
-      return dA - dB;
-    });
-
-    const seed = available[0]!;
-    const cluster: FiboaCandidateParcel[] = [seed];
-    usedFiboaIds.add(seed.fiboaId);
-    selectedFiboaIds.push(seed.fiboaId);
-    fiboaIdToFieldId.set(seed.fiboaId, f.id);
-    let clusterHa = seed.areaHa;
-
-    // 2. Contiguous Cluster-Merge: greedily merge directly adjacent sub-parcels (sharing an edge / < ~30m gap)
-    // until the block reaches a realistic contiguous block size (~targetHa), preventing any patchwork!
-    for (let step = 0; step < 6 && clusterHa < targetHa * 0.88; step++) {
-      let bestNeighbor: FiboaCandidateParcel | null = null;
-      let bestScore = Infinity;
-
-      for (const cand of candidates) {
-        if (usedFiboaIds.has(cand.fiboaId)) continue;
-        if (clusterHa + cand.areaHa > targetHa * 1.45 && cluster.length >= 2) continue;
-
-        // Minimum vertex-to-vertex boundary distance to any parcel already in the cluster
-        let minEdgeGapDeg = Infinity;
-        for (const member of cluster) {
-          const gap = minBoundaryDistanceDeg(member.polygon, cand.polygon);
-          if (gap < minEdgeGapDeg) minEdgeGapDeg = gap;
-        }
-
-        // Only merge parcels that directly adjoin the block (gap <= 0.00032 deg ≈ 28 m across a field track)
-        if (minEdgeGapDeg <= 0.00032) {
-          const distToSeedKm = distanceKm(seed.center, cand.center);
-          const score = minEdgeGapDeg * 1000 + distToSeedKm * 0.4;
-          if (score < bestScore) {
-            bestScore = score;
-            bestNeighbor = cand;
-          }
-        }
+    const rings = f.geometry?.coordinates;
+    if (!Array.isArray(rings)) continue;
+    for (const ring of rings) {
+      if (!Array.isArray(ring)) continue;
+      for (const pt of ring) {
+        const lon = Number(pt?.[0]);
+        const lat = Number(pt?.[1]);
+        if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+        if (lon < minLon) minLon = lon;
+        if (lon > maxLon) maxLon = lon;
+        if (lat < minLat) minLat = lat;
+        if (lat > maxLat) maxLat = lat;
+        count++;
       }
-
-      if (!bestNeighbor) break;
-      cluster.push(bestNeighbor);
-      usedFiboaIds.add(bestNeighbor.fiboaId);
-      selectedFiboaIds.push(bestNeighbor.fiboaId);
-      fiboaIdToFieldId.set(bestNeighbor.fiboaId, f.id);
-      clusterHa += bestNeighbor.areaHa;
     }
-
-    const allClusterRings = cluster.flatMap((c) => c.rings);
-    const mergedGeometry = stitchPolygonRingsList(allClusterRings) ?? seed.polygon;
-
-    snappedFeatures.push({
-      type: "Feature",
-      id: f.id,
-      properties: {
-        id: f.id,
-        name: f.name,
-        status: f.status ?? "status-ok",
-        areaHa: f.areaHa,
-        crop: f.crop ?? "Mais",
-        usage: f.usage ?? "",
-      },
-      geometry: mergedGeometry,
-    });
   }
 
-  return {
-    selectedFiboaIds,
-    fiboaIdToFieldId,
-    snappedFeatures,
-  };
+  if (count === 0) return null;
+  return [minLon, minLat, maxLon, maxLat];
 }
 
 export function HofMap({ farm, fields, className = "", onSelectField }: HofMapProps) {
@@ -286,7 +82,6 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MlMap | null>(null);
   const markers = useRef<Marker[]>([]);
-  const fiboaIdToFieldIdRef = useRef<Map<string, string>>(new Map());
   const fieldsRef = useRef(fields);
   useEffect(() => {
     fieldsRef.current = fields;
@@ -298,7 +93,7 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
 
   const [mapReady, setMapReady] = useState(false);
 
-  // GeoJSON parcel data collection
+  // Single canonical GeoJSON parcel data collection for the 7 disjoint DEBYLI farm fields
   const geojson = useMemo(
     () => ({
       type: "FeatureCollection" as const,
@@ -333,29 +128,34 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
       const maplibregl = await loadMaplibre();
       if (cancelled || !container.current) return;
 
-      // Collect all coordinate points for fitBounds: farm center and field boundaries
-      const points: [number, number][] = [];
-      if (farm.lat != null && farm.lon != null) {
-        points.push([farm.lon, farm.lat]);
-      }
-      for (const feat of geojsonRef.current.features) {
-        if (feat.geometry?.coordinates) {
-          for (const ring of feat.geometry.coordinates) {
-            for (const pt of ring) {
-              points.push([pt[0], pt[1]]);
-            }
-          }
-        }
-      }
+      const bbox = computeFieldsBoundingBox(fieldsRef.current);
+      // 0.125 expansion on each side of 1.0 span = 0.125 / 1.25 = exact 10% margin on left, right, top, and bottom
+      const initialBounds: [[number, number], [number, number]] | undefined = bbox
+        ? (() => {
+            const [minLon, minLat, maxLon, maxLat] = bbox;
+            const lonSpan = Math.max(0.002, maxLon - minLon);
+            const latSpan = Math.max(0.002, maxLat - minLat);
+            return [
+              [minLon - lonSpan * 0.125, minLat - latSpan * 0.125],
+              [maxLon + lonSpan * 0.125, maxLat + latSpan * 0.125],
+            ];
+          })()
+        : undefined;
 
-      const defaultCenter: [number, number] =
-        farm.lon != null && farm.lat != null ? [farm.lon, farm.lat] : DEUTSCHLAND.center;
+      const defaultCenter: [number, number] = bbox
+        ? [(bbox[0] + bbox[2]) / 2, (bbox[1] + bbox[3]) / 2]
+        : farm.lon != null && farm.lat != null
+          ? [farm.lon, farm.lat]
+          : DEUTSCHLAND.center;
 
       const m = new maplibregl.Map({
         container: container.current,
         style: LUFTBILD,
         center: defaultCenter,
-        zoom: points.length > 0 ? 14 : DEUTSCHLAND.zoom,
+        zoom: bbox ? 14.1 : DEUTSCHLAND.zoom,
+        ...(initialBounds
+          ? { bounds: initialBounds, fitBoundsOptions: { padding: 0 } }
+          : {}),
         canvasContextAttributes: { preserveDrawingBuffer: true },
         attributionControl: { compact: true },
         cooperativeGestures: true,
@@ -372,27 +172,49 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
 
       m.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
 
+      const fitToExactTenPercentMargin = () => {
+        const currentBbox = computeFieldsBoundingBox(fieldsRef.current);
+        if (!currentBbox || !container.current) return;
+        const [minLon, minLat, maxLon, maxLat] = currentBbox;
+        const w = container.current.clientWidth || 800;
+        const h = container.current.clientHeight || 520;
+        const padX = Math.max(24, Math.round(w * 0.1));
+        const padY = Math.max(24, Math.round(h * 0.1));
+
+        try {
+          m.fitBounds(
+            [
+              [minLon, minLat],
+              [maxLon, maxLat],
+            ],
+            {
+              padding: { left: padX, right: padX, top: padY, bottom: padY },
+              duration: 0,
+              maxZoom: 16.5,
+            },
+          );
+        } catch {
+          // Fallback for mock map instances in unit tests that only accept numeric padding
+          m.fitBounds(
+            [
+              [minLon, minLat],
+              [maxLon, maxLat],
+            ],
+            { padding: padX, duration: 0, maxZoom: 16.5 },
+          );
+        }
+      };
+
       let initialLoaded = false;
 
       m.on("style.load", () => {
         if (cancelled) return;
 
-        // 1. Official fiboa PMTiles Vector Field Layer (subtle cadastral outlines + strong highlight on selected farm blocks)
+        // 1. Subtle background fiboa cadastral grid (no selected-fill overlay so zero double-drawing occurs)
         if (!m.getSource("fiboa-fields")) {
           m.addSource("fiboa-fields", {
             type: "vector",
             url: FIBOA_PMTILES_URL,
-          });
-          m.addLayer({
-            id: "fiboa-fields-fill",
-            type: "fill",
-            source: "fiboa-fields",
-            "source-layer": "fields",
-            minzoom: 11,
-            paint: {
-              "fill-color": "#ffffff",
-              "fill-opacity": 0.04,
-            },
           });
           m.addLayer({
             id: "fiboa-fields-outline",
@@ -401,76 +223,21 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
             "source-layer": "fields",
             minzoom: 11,
             paint: {
-              "line-color": "#c9945f",
-              "line-width": 1.2,
-              "line-opacity": 0.65,
+              "line-color": "#d6b388",
+              "line-width": 1.0,
+              "line-opacity": 0.22,
             },
           });
-          m.addLayer({
-            id: "fiboa-fields-selected-fill",
-            type: "fill",
-            source: "fiboa-fields",
-            "source-layer": "fields",
-            minzoom: 11,
-            filter: ["==", ["get", "id"], "__NONE__"] as unknown as FilterSpecification,
-            paint: {
-              "fill-color": "#2c7a52",
-              "fill-opacity": 0.22,
-            },
-          });
-          m.addLayer({
-            id: "fiboa-fields-selected-outline",
-            type: "line",
-            source: "fiboa-fields",
-            "source-layer": "fields",
-            minzoom: 11,
-            filter: ["==", ["get", "id"], "__NONE__"] as unknown as FilterSpecification,
-            paint: {
-              "line-color": "#ffffff",
-              "line-width": 2.2,
-              "line-opacity": 0.9,
-            },
-          });
-          // Immediately apply the known official DEBYLI fiboa cluster IDs on frame 1
-          const initialFiboaIds: string[] = [];
-          const initialMap = new Map<string, string>();
-          for (const f of fieldsRef.current) {
-            const clusterIds = REAL_FREISING_FIBOA_CLUSTER_IDS[f.id] ?? [];
-            for (const fid of clusterIds) {
-              initialFiboaIds.push(fid);
-              initialMap.set(fid, f.id);
-            }
-          }
-          if (initialFiboaIds.length > 0) {
-            fiboaIdToFieldIdRef.current = initialMap;
-            const initFilter = buildFiboaIdFilterExpression(initialFiboaIds);
-            try {
-              m.setFilter("fiboa-fields-selected-fill", initFilter);
-              m.setFilter("fiboa-fields-selected-outline", initFilter);
-            } catch {
-              // Ignore in headless test mocks
-            }
-          }
         }
 
-        // 2. Create parcel GeoJSON source (re-attached after basemap style switches)
+        // 2. Single canonical GeoJSON source for the 7 disjoint farm fields with high-contrast white halo
         if (!m.getSource("hof-schlaege")) {
           m.addSource("hof-schlaege", {
             type: "geojson",
             data: geojsonRef.current,
           });
 
-          const cOk = themaFarbe("status-ok", "#15803d");
-          const cAction = themaFarbe("status-action", "#1d4ed8");
-          const cProblem = themaFarbe("status-problem", "#b45309");
-          const cUrgent = themaFarbe("status-urgent", "#b91c1c");
-
-          const borderOk = themaFarbe("status-ok-border", "#14532d");
-          const borderAction = themaFarbe("status-action-border", "#1e40af");
-          const borderProblem = themaFarbe("status-problem-border", "#78350f");
-          const borderUrgent = themaFarbe("status-urgent-border", "#7f1d1d");
-
-          // Parcel fill paint by field status
+          // Vibrant, high-contrast status fill colors on dark satellite imagery
           m.addLayer({
             id: "hof-schlaege-fill",
             type: "fill",
@@ -480,18 +247,30 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
                 "match",
                 ["get", "status"],
                 "status-action",
-                cAction,
+                "#f59e0b",
                 "status-problem",
-                cProblem,
+                "#f97316",
                 "status-urgent",
-                cUrgent,
-                cOk,
+                "#ef4444",
+                "#10b981",
               ],
-              "fill-opacity": 0.45,
+              "fill-opacity": 0.54,
             },
           });
 
-          // Parcel boundary outline in status color
+          // White outer contrast halo so every field stands out razor-sharply against dark aerial imagery
+          m.addLayer({
+            id: "hof-schlaege-halo",
+            type: "line",
+            source: "hof-schlaege",
+            paint: {
+              "line-color": "#ffffff",
+              "line-width": 6.5,
+              "line-opacity": 0.92,
+            },
+          });
+
+          // Crisp inner status outline inside the white halo
           m.addLayer({
             id: "hof-schlaege-line",
             type: "line",
@@ -501,14 +280,14 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
                 "match",
                 ["get", "status"],
                 "status-action",
-                borderAction,
+                "#b45309",
                 "status-problem",
-                borderProblem,
+                "#c2410c",
                 "status-urgent",
-                borderUrgent,
-                borderOk,
+                "#b91c1c",
+                "#047857",
               ],
-              "line-width": 3,
+              "line-width": 3.2,
             },
           });
         }
@@ -516,115 +295,44 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
         if (!initialLoaded) {
           initialLoaded = true;
 
-          // Farm center marker pin
-          if (farm.lat != null && farm.lon != null) {
-            const el = document.createElement("div");
-            el.className = "hofstelle-marker group cursor-pointer flex flex-col items-center";
+          // Clear any existing markers before placing field badges
+          for (const mk of markers.current) mk.remove();
+          markers.current = [];
 
-            const iconWrapper = document.createElement("div");
-            iconWrapper.className =
-              "relative flex items-center justify-center size-9 rounded-full bg-white text-leaf-800 shadow-lift ring-2 ring-leaf-800 hover:scale-110 transition-transform";
+          // Place a compact, high-contrast label badge ("Name · XX,X ha") at the center of each disjoint field
+          for (const f of fieldsRef.current) {
+            const c = centroid(f.geometry);
+            if (!Number.isFinite(c.lat) || !Number.isFinite(c.lon)) continue;
 
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            svg.setAttribute("class", "size-5");
-            svg.setAttribute("viewBox", "0 0 24 24");
-            svg.setAttribute("fill", "none");
-            svg.setAttribute("stroke", "currentColor");
-            svg.setAttribute("stroke-width", "2");
-            svg.setAttribute("stroke-linecap", "round");
-            svg.setAttribute("stroke-linejoin", "round");
+            const badgeEl = document.createElement("button");
+            badgeEl.type = "button";
+            badgeEl.className =
+              "hof-schlag-badge cursor-pointer rounded-control border border-white/85 bg-[#142018]/92 px-2 py-0.5 text-[11px] font-bold text-white shadow-lift whitespace-nowrap transition-transform hover:scale-105";
+            badgeEl.textContent = `${f.name} · ${num(f.areaHa)} ha`;
+            badgeEl.addEventListener("click", (ev) => {
+              ev.stopPropagation();
+              if (onSelectFieldRef.current) {
+                onSelectFieldRef.current(f.id);
+              } else {
+                router.push(`/feld/${f.id}`);
+              }
+            });
 
-            const pathDoor = document.createElementNS(svgNS, "path");
-            pathDoor.setAttribute("d", "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8");
-            const pathHouse = document.createElementNS(svgNS, "path");
-            pathHouse.setAttribute(
-              "d",
-              "M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z",
-            );
-            svg.appendChild(pathDoor);
-            svg.appendChild(pathHouse);
-
-            const pingContainer = document.createElement("span");
-            pingContainer.className = "absolute -top-1 -right-1 flex size-3";
-
-            const pingWave = document.createElement("span");
-            pingWave.className =
-              "animate-ping absolute inline-flex h-full w-full rounded-full bg-leaf-400 opacity-75";
-            const pingDot = document.createElement("span");
-            pingDot.className = "relative inline-flex rounded-full size-3 bg-leaf-600";
-
-            pingContainer.appendChild(pingWave);
-            pingContainer.appendChild(pingDot);
-
-            iconWrapper.appendChild(svg);
-            iconWrapper.appendChild(pingContainer);
-
-            const labelEl = document.createElement("div");
-            labelEl.className =
-              "mt-1 rounded-full bg-leaf-900/90 text-white px-2.5 py-0.5 text-xs font-semibold shadow whitespace-nowrap";
-            labelEl.textContent = farm.name || "Hofstelle";
-
-            el.appendChild(iconWrapper);
-            el.appendChild(labelEl);
-
-            const farmMarker = new maplibregl.Marker({ element: el })
-              .setLngLat([farm.lon, farm.lat])
+            const fieldMarker = new maplibregl.Marker({
+              element: badgeEl,
+              anchor: "center",
+            })
+              .setLngLat([c.lon, c.lat])
               .addTo(m);
-            markers.current.push(farmMarker);
+            markers.current.push(fieldMarker);
           }
 
-          // Compute bounding box and fit camera to show farmyard and all fields
-          if (points.length > 0) {
-            const lons = points.map((p) => p[0]);
-            const lats = points.map((p) => p[1]);
-            const minLon = Math.min(...lons);
-            const maxLon = Math.max(...lons);
-            const minLat = Math.min(...lats);
-            const maxLat = Math.max(...lats);
-
-            const padLon = Math.max((maxLon - minLon) * 0.14, 0.0022);
-            const padLat = Math.max((maxLat - minLat) * 0.14, 0.0022);
-
-            m.fitBounds(
-              [
-                [minLon - padLon, minLat - padLat],
-                [maxLon + padLon, maxLat + padLat],
-              ],
-              { padding: 40, duration: 0, maxZoom: 15.2 },
-            );
-          }
-
+          fitToExactTenPercentMargin();
           setMapReady(true);
         }
       });
 
-      const applyLiveFiboaClusters = () => {
-        if (cancelled) return;
-        const resolved = resolveContiguousFiboaClustersForFarm(m, fieldsRef.current);
-        if (!resolved || resolved.selectedFiboaIds.length === 0) return;
-
-        fiboaIdToFieldIdRef.current = resolved.fiboaIdToFieldId;
-        const filterExpr = buildFiboaIdFilterExpression(resolved.selectedFiboaIds);
-        try {
-          if (m.getLayer("fiboa-fields-selected-fill")) {
-            m.setFilter("fiboa-fields-selected-fill", filterExpr);
-          }
-          if (m.getLayer("fiboa-fields-selected-outline")) {
-            m.setFilter("fiboa-fields-selected-outline", filterExpr);
-          }
-        } catch {
-          // Ignore in headless test mocks
-        }
-
-        const src = m.getSource("hof-schlaege") as GeoJSONSource | undefined;
-        src?.setData({
-          type: "FeatureCollection",
-          features: resolved.snappedFeatures,
-        });
-      };
-
-      m.on("idle", applyLiveFiboaClusters);
+      m.on("resize", fitToExactTenPercentMargin);
 
       // Cursor pointer on field hover
       m.on("mouseenter", "hof-schlaege-fill", () => {
@@ -644,22 +352,6 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
             onSelectFieldRef.current(fieldId);
           } else {
             router.push(`/feld/${fieldId}`);
-          }
-        }
-      });
-
-      m.on("click", "fiboa-fields-selected-fill", (e) => {
-        const feat = e.features?.[0];
-        if (!feat) return;
-        const fid = extractFiboaFeatureId(
-          feat as unknown as { id?: string | number; properties?: Record<string, unknown> },
-        );
-        const mappedFieldId = fid ? fiboaIdToFieldIdRef.current.get(fid) : undefined;
-        if (mappedFieldId) {
-          if (onSelectFieldRef.current) {
-            onSelectFieldRef.current(mappedFieldId);
-          } else {
-            router.push(`/feld/${mappedFieldId}`);
           }
         }
       });
@@ -684,33 +376,49 @@ export function HofMap({ farm, fields, className = "", onSelectField }: HofMapPr
   }, [geojson, mapReady]);
 
   return (
-    <div className={`relative overflow-hidden rounded-panel border border-control bg-data-track ${className}`}>
-      <div ref={container} className="h-full min-h-[360px] w-full" />
+    <div className="space-y-2.5">
+      <div
+        ref={container}
+        data-testid="hof-map-container"
+        data-spross-target="hof-map"
+        className={`relative w-full overflow-hidden rounded-card border border-control bg-data-track ${
+          className || "h-[360px] sm:h-[440px]"
+        }`}
+      />
 
-      {/* Map legend anchored bottom-right: status as shape plus word (Feldfarben) */}
-      <div className="absolute bottom-3 right-3 z-10 rounded-panel border border-control bg-surface px-3 py-2 text-caption">
-        <div className="mb-1.5 flex items-center gap-1.5 font-semibold text-fg">
-          <Home className="size-3.5 text-link" aria-hidden />
-          <span>Hof & Schläge</span>
-        </div>
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-fg">
-          <div className="flex items-center gap-1.5">
-            <StatusShape status="status-ok" size={10} />
-            <span>Alles im Plan</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <StatusShape status="status-action" size={10} />
-            <span>Aktion nötig</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <StatusShape status="status-problem" size={10} />
-            <span>Problem</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <StatusShape status="status-urgent" size={10} />
-            <span>Dringend</span>
-          </div>
-        </div>
+      {/* Compact map legend below the frame */}
+      <div
+        aria-label="Karten-Legende"
+        className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-caption text-fg-muted"
+      >
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="inline-block size-3 rounded-xs border-2 border-white bg-[#10b981] shadow-xs"
+          />
+          <span>Alles im Plan</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="inline-block size-3 rounded-xs border-2 border-white bg-[#f59e0b] shadow-xs"
+          />
+          <span>Aktion nötig</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="inline-block size-3 rounded-xs border-2 border-white bg-[#f97316] shadow-xs"
+          />
+          <span>Sortenwahl offen</span>
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden="true"
+            className="inline-block size-3 rounded-xs border-2 border-white bg-[#ef4444] shadow-xs"
+          />
+          <span>Dringend</span>
+        </span>
       </div>
     </div>
   );

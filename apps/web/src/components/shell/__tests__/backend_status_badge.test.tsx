@@ -24,7 +24,7 @@ describe("Header Backend Status Badge & Settings Toggle (SEEDLE-FEAT-002)", () =
   });
 
   describe("1. Offline / Disconnected Red Alert Rendering", () => {
-    it("renders a clean red status dot linking to /demo when backend is offline in German", () => {
+    it("renders a visible red alert badge ('Kein Backend verbunden') linking to /demo when backend is offline in German", () => {
       const html = renderToStaticMarkup(
         <LanguageProvider initialLocale="de">
           <DemoProvider value={{ ...DEMO_STANDARD, showBackendStatusBadge: true }}>
@@ -43,12 +43,15 @@ describe("Header Backend Status Badge & Settings Toggle (SEEDLE-FEAT-002)", () =
         'aria-label="Kein Backend verbunden · Klickdummy zeigt aktuell Demo- und Schätzwerte"',
       );
       expect(html).toContain("bg-[#e05a47]");
+      expect(html).toContain("bg-[#fdf2f0]");
+      expect(html).toContain("text-[#b42318]");
+      expect(html).toContain("border-[#e05a47]");
       expect(html).toContain("rounded-full");
       expect(html).toContain("size-2.5");
-      expect(html).not.toContain("border-[#e05a47]");
+      expect(html).toContain("Kein Backend verbunden");
     });
 
-    it("renders a clean red status dot linking to /demo when backend is offline in English", () => {
+    it("renders a visible red alert badge ('No backend connected') linking to /demo when backend is offline in English", () => {
       const html = renderToStaticMarkup(
         <LanguageProvider initialLocale="en">
           <DemoProvider value={{ ...DEMO_STANDARD, showBackendStatusBadge: true }}>
@@ -65,8 +68,12 @@ describe("Header Backend Status Badge & Settings Toggle (SEEDLE-FEAT-002)", () =
         'aria-label="Offline mode (no backend) · Showing demo estimates"',
       );
       expect(html).toContain("bg-[#e05a47]");
+      expect(html).toContain("bg-[#fdf2f0]");
+      expect(html).toContain("text-[#b42318]");
+      expect(html).toContain("border-[#e05a47]");
       expect(html).toContain("rounded-full");
       expect(html).toContain("size-2.5");
+      expect(html).toContain("No backend connected");
     });
   });
 
@@ -166,7 +173,7 @@ describe("Header Backend Status Badge & Settings Toggle (SEEDLE-FEAT-002)", () =
       expect(html).not.toContain('data-testid="backend-status-badge"');
     });
 
-    it("renders a clean status dot with accessible label and no visible text clutter for 390px header layouts", () => {
+    it("renders the visible red warning text ('Kein Backend verbunden') next to the red dot when offline", () => {
       const htmlDe = renderToStaticMarkup(
         <LanguageProvider initialLocale="de">
           <DemoProvider value={{ ...DEMO_STANDARD, showBackendStatusBadge: true }}>
@@ -179,8 +186,7 @@ describe("Header Backend Status Badge & Settings Toggle (SEEDLE-FEAT-002)", () =
       expect(htmlDe).toContain('aria-label="Kein Backend verbunden · Klickdummy zeigt aktuell Demo- und Schätzwerte"');
       expect(htmlDe).toContain("size-2.5");
       expect(htmlDe).toContain("rounded-full");
-      expect(htmlDe).not.toContain(">Kein Backend<");
-      expect(htmlDe).not.toContain(">Offline<");
+      expect(htmlDe).toContain(">Kein Backend verbunden<");
 
       const htmlEn = renderToStaticMarkup(
         <LanguageProvider initialLocale="en">
@@ -192,7 +198,7 @@ describe("Header Backend Status Badge & Settings Toggle (SEEDLE-FEAT-002)", () =
 
       expect(htmlEn).toContain('title="Offline mode (no backend) · Showing demo estimates"');
       expect(htmlEn).toContain('aria-label="Offline mode (no backend) · Showing demo estimates"');
-      expect(htmlEn).not.toContain(">Offline<");
+      expect(htmlEn).toContain(">No backend connected<");
     });
   });
 

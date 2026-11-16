@@ -50,7 +50,7 @@ export default async function HofPage() {
   );
 }
 
-async function Hof({ user }: { user: CurrentUser }) {
+export async function Hof({ user }: { user: CurrentUser }) {
   const [felder, wissen, demo, farm] = await Promise.all([
     listFields(user.id),
     factsFor(user.id),
@@ -92,12 +92,54 @@ async function Hof({ user }: { user: CurrentUser }) {
 
       {/* 2-column layout on desktop: aerial map & what to do */}
       <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-12">
-        <div className="lg:col-span-7 xl:col-span-8">
+        <div className="space-y-6 lg:col-span-7 xl:col-span-8">
           <HofMap
             farm={farm}
             fields={felder}
             className="h-[400px] sm:h-[460px] lg:h-[560px]"
           />
+
+          {/* Prominent "Aktuelles" card directly underneath the farm map for whole-farm (100 ha) 2027 recommendation */}
+          {felder.length > 0 ? (
+            <section
+              data-testid="hof-aktuelles-card"
+              aria-labelledby="hof-aktuelles-heading"
+              className="rounded-panel border-2 border-selected bg-highlight p-5 sm:p-6 space-y-3"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-caption font-bold text-link">
+                  Aktuelles · Anbauplanung 2027
+                </span>
+                <Badge tone="leaf">{num(totalHa)} ha Gesamtfläche</Badge>
+              </div>
+              <h2 id="hof-aktuelles-heading" className="text-heading text-fg">
+                Sortenempfehlung für 2027 steht noch aus
+              </h2>
+              <p className="max-w-measure text-body text-fg-muted">
+                Für deine <strong className="text-fg tabular-nums">{felder.length} Schläge</strong>{" "}
+                mit insgesamt <strong className="text-fg tabular-nums">{num(totalHa)} ha Gesamtfläche</strong>{" "}
+                steht die Sortenauswahl für die Saison 2027 an. Berechne jetzt deine Sortenverteilung
+                und den Saatgutbedarf für deinen gesamten Betrieb.
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <ButtonLink
+                  href={`/feld/${felder[0]!.id}/anbau?scope=farm&totalHa=${Math.round(totalHa * 10) / 10}&fieldsCount=${felder.length}`}
+                  data-testid="hof-start-2027-recommendation-btn"
+                  variant="primary"
+                >
+                  <span>Sortenempfehlung 2027 für alle {num(totalHa)} ha starten</span>
+                  <ArrowRight className="size-4" aria-hidden="true" />
+                </ButtonLink>
+                <ButtonLink
+                  href={`/feld/${felder[0]!.id}/ranking?scope=farm&totalHa=${Math.round(totalHa * 10) / 10}&fieldsCount=${felder.length}&usage=silomais`}
+                  data-testid="hof-direct-2027-ranking-btn"
+                  variant="secondary"
+                >
+                  <span>Direkt zum Mais-Sortenvergleich ({num(totalHa)} ha)</span>
+                </ButtonLink>
+              </div>
+            </section>
+          ) : null}
         </div>
 
         <div className="lg:col-span-5 xl:col-span-4">

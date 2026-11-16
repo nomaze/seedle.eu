@@ -71,6 +71,22 @@ describe("Farm Overview (/hof), Status Traffic Light, Farm Map, Action Panel & S
         expect(first[0]).toBeCloseTo(last[0], 5);
         expect(first[1]).toBeCloseTo(last[1], 5);
       }
+
+      // Every pair of farm fields must be strictly disjoint (minimum boundary separation >= 70 m, zero overlapping edges)
+      for (let i = 0; i < fields.length; i++) {
+        for (let j = i + 1; j < fields.length; j++) {
+          const rA = fields[i]!.geometry.coordinates[0]!;
+          const rB = fields[j]!.geometry.coordinates[0]!;
+          let minD = Infinity;
+          for (const a of rA) {
+            for (const b of rB) {
+              const d = Math.hypot((a[0] - b[0]) * 74000, (a[1] - b[1]) * 111000);
+              if (d < minD) minD = d;
+            }
+          }
+          expect(minD).toBeGreaterThanOrEqual(70);
+        }
+      }
     });
 
     it("allows querying all cultivation years per field for farm overview", async () => {

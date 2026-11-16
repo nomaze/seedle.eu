@@ -244,11 +244,16 @@ class InMemoryStore {
       if (stat.mtimeMs <= this.lastLoadedMtimeMs) return;
       const raw = fs.readFileSync(filePath, "utf8");
       const parsed = JSON.parse(raw) as {
+        schemaVersion?: number;
         farms?: Array<[string, FarmRow]>;
         fields?: Array<[string, FieldRow]>;
         deletedFields?: string[];
         fieldYears?: Array<[string, FieldYearRow[]]>;
       };
+      if (parsed.schemaVersion !== 3) {
+        this.reset(true);
+        return;
+      }
       if (Array.isArray(parsed.farms)) {
         this.farms = new Map(
           parsed.farms.map(([k, v]) => [
@@ -318,6 +323,7 @@ class InMemoryStore {
       }
       tmpPath = `${filePath}.${uniqueSuffix}.tmp`;
       const payload = JSON.stringify({
+        schemaVersion: 3,
         farms: Array.from(this.farms.entries()),
         fields: Array.from(this.fields.entries()),
         deletedFields: Array.from(this.deletedFields.values()),

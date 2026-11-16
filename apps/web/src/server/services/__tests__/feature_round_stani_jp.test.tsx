@@ -3,6 +3,7 @@ import React from "react";
 import { renderToStaticMarkup, renderToString } from "react-dom/server";
 import { describe, expect, it, vi, beforeAll } from "vitest";
 import StartPage from "@/app/page";
+import { Hof } from "@/app/hof/page";
 import UeberUnsPage from "@/app/ueber-uns/page";
 import WarumKostenlosPage from "@/app/warum-kostenlos/page";
 import WarumWirDasMachenPage from "@/app/warum-wir-das-machen/page";
@@ -1578,6 +1579,67 @@ describe("Feature Round Stani, JP & KWS-Max (SEEDLE-FEAT-003 to SEEDLE-FEAT-007)
       } finally {
         globalThis.fetch = origFetch;
       }
+    });
+
+    it("Whole-Farm Flow (100,0 ha from /hof -> /anbau -> FieldRankingView): renders 'Aktuelles · Sortenempfehlung für 2027 steht noch aus' card on /hof and calculates 75,0 ha / 25,0 ha across all 100,0 ha", async () => {
+      const hofElement = await Hof({
+        user: {
+          id: DEMO_USER_ID,
+          name: "Peter Müller",
+          email: "peter@seedle-demo.de",
+          emailVerified: true,
+          telefon: null,
+        },
+      });
+      const hofHtml = renderToStaticMarkup(<TestProviders>{hofElement}</TestProviders>);
+      expect(hofHtml).toContain('data-testid="hof-aktuelles-card"');
+      expect(hofHtml).toContain("Sortenempfehlung für 2027 steht noch aus");
+      expect(hofHtml).toContain("Sortenempfehlung 2027 für alle 100 ha starten");
+      expect(hofHtml).toContain("scope=farm&amp;totalHa=100&amp;fieldsCount=7");
+
+      // Step 2: /anbau in farm scope (100 ha across 7 fields)
+      const anbauFarmHtml = renderToStaticMarkup(
+        <TestProviders>
+          <AnbauCropUsageSection
+            fieldId="f-hinteracker"
+            fieldName="Vöttinger Feld"
+            areaHa={14.5}
+            defaultCropSelected="mais"
+            scope="farm"
+            totalHaOverride={100}
+            fieldsCount={7}
+          />
+        </TestProviders>,
+      );
+      expect(anbauFarmHtml).toContain('data-testid="anbau-farm-scope-banner"');
+      expect(anbauFarmHtml).toContain("Gesamter Betrieb · 100 ha Gesamtfläche (7 Schläge)");
+      expect(anbauFarmHtml).toContain(
+        "/feld/f-hinteracker/ranking?usage=koernermais&amp;scope=farm&amp;totalHa=100&amp;fieldsCount=7",
+      );
+
+      // Step 3: FieldRankingView in farm scope (100 ha across 7 fields -> 75 ha + 25 ha)
+      const { field } = await requireField("f-hinteracker");
+      const rec = await recommendationFor(field);
+      expect(rec).not.toBeNull();
+
+      const rankingFarmHtml = renderToStaticMarkup(
+        <TestProviders>
+          <FieldRankingView
+            field={field}
+            rec={rec!}
+            sortierung="gewichtet"
+            scope="farm"
+            totalFarmHa={100}
+            farmFieldsCount={7}
+          />
+        </TestProviders>,
+      );
+      expect(rankingFarmHtml).toContain('data-testid="ranking-farm-scope-banner"');
+      expect(rankingFarmHtml).toContain(
+        "Sortenempfehlung 2027 für deinen gesamten Betrieb · 100 ha Gesamtfläche (7 Schläge)",
+      );
+      expect(rankingFarmHtml).toContain("75 ha · 75 %");
+      expect(rankingFarmHtml).toContain("25 ha · 25 %");
     });
   });
 });

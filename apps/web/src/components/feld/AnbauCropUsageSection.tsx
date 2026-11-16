@@ -1,8 +1,9 @@
 "use client";
 
 import { ArrowRight, Check } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import type React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { ChoiceLink } from "@/components/ui/Choice";
@@ -23,6 +24,7 @@ import {
   loadFieldAgronomyProfile,
   saveFieldAgronomyProfile,
 } from "@/lib/fieldAgronomyProfile";
+import { num } from "@/lib/format";
 
 const PRIMARY_CROPS = [
   {
@@ -92,6 +94,9 @@ export interface AnbauCropUsageSectionProps {
   lat?: number;
   lon?: number;
   defaultCropSelected?: "mais" | null;
+  scope?: "farm" | "field";
+  totalHaOverride?: number;
+  fieldsCount?: number;
 }
 
 function toPreviewCropSlug(cropName: string): string {
@@ -114,9 +119,52 @@ export function AnbauCropUsageSection({
   lat = 48.4028,
   lon = 11.7489,
   defaultCropSelected = null,
+  scope: propScope,
+  totalHaOverride,
+  fieldsCount: propFieldsCount,
 }: AnbauCropUsageSectionProps): React.JSX.Element {
+  const searchParams = useSearchParams();
+  const queryScope = searchParams?.get("scope");
+  const queryTotalHa = Number(searchParams?.get("totalHa"));
+  const queryFieldsCount = Number(searchParams?.get("fieldsCount"));
+
+  const isFarmScope =
+    propScope === "farm" ||
+    queryScope === "farm" ||
+    (typeof totalHaOverride === "number" && totalHaOverride > 0) ||
+    (Number.isFinite(queryTotalHa) && queryTotalHa > 0);
+
+  const effectiveAreaHa =
+    typeof totalHaOverride === "number" && totalHaOverride > 0
+      ? totalHaOverride
+      : Number.isFinite(queryTotalHa) && queryTotalHa > 0
+        ? queryTotalHa
+        : areaHa;
+
+  const effectiveFieldsCount =
+    typeof propFieldsCount === "number" && propFieldsCount > 0
+      ? propFieldsCount
+      : Number.isFinite(queryFieldsCount) && queryFieldsCount > 0
+        ? queryFieldsCount
+        : 7;
+
   const [selectedCrop, setSelectedCrop] = useState<"mais" | null>(defaultCropSelected);
   const [selectedUsage, setSelectedUsage] = useState<MaisUsage | null>(null);
+
+  useEffect(() => {
+    if (!isFarmScope || typeof window === "undefined") return;
+    try {
+      const payload = JSON.stringify({
+        scope: "farm",
+        totalHa: effectiveAreaHa,
+        fieldsCount: effectiveFieldsCount,
+      });
+      window.sessionStorage?.setItem("seedle_active_farm_scope", payload);
+      window.localStorage?.setItem("seedle_active_farm_scope", payload);
+    } catch {
+      // Ignore storage errors
+    }
+  }, [isFarmScope, effectiveAreaHa, effectiveFieldsCount]);
 
   function handleCropSelected(cropName: string, usageName: string): void {
     if (
@@ -144,7 +192,7 @@ export function AnbauCropUsageSection({
     }
     void submitFieldIntake({
       field_id: fieldId,
-      area_ha: areaHa,
+      area_ha: effectiveAreaHa,
       lat,
       lon,
       crop: cropName,
@@ -154,13 +202,33 @@ export function AnbauCropUsageSection({
   }
 
   const isMaisSelected = selectedCrop === "mais";
+  const farmQuerySuffix = isFarmScope
+    ? `&scope=farm&totalHa=${effectiveAreaHa}&fieldsCount=${effectiveFieldsCount}`
+    : "";
+  const targetLabel = isFarmScope
+    ? `deinen gesamten Betrieb (${num(effectiveAreaHa)} ha · ${effectiveFieldsCount} Schläge)`
+    : fieldName;
 
   return (
     <>
+      {isFarmScope ? (
+        <div
+          data-testid="anbau-farm-scope-banner"
+          className="flex flex-wrap items-center justify-between gap-2 rounded-panel border-2 border-selected bg-highlight px-4 py-3 text-small font-semibold text-fg"
+        >
+          <span>
+            Gesamter Betrieb · {num(effectiveAreaHa)} ha Gesamtfläche ({effectiveFieldsCount} Schläge)
+          </span>
+          <Badge tone="leaf">Betriebsweite Sortenplanung 2027</Badge>
+        </div>
+      ) : null}
+
       {/* 1. Primary crop selection: maize-only single-select, preview crops are non-selectable */}
       <Card aria-labelledby="hauptkultur-heading">
         <SectionTitle hint={<Badge tone="leaf">1. Hauptkultur wählen</Badge>}>
-          <span id="hauptkultur-heading">Hauptauswahl der Kulturart für {fieldName}</span>
+          <span id="hauptkultur-heading">
+            Hauptauswahl der Kulturart für {targetLabel}
+          </span>
         </SectionTitle>
 
         <ul
@@ -249,7 +317,7 @@ export function AnbauCropUsageSection({
           </SectionTitle>
           <p className="max-w-measure text-body text-fg-muted">
             Ein Klick auf deine Nutzungsrichtung öffnet sofort deine Sortenempfehlung für{" "}
-            {fieldName}.
+            {targetLabel}.
           </p>
 
           <div
@@ -258,7 +326,7 @@ export function AnbauCropUsageSection({
             aria-label="Nutzungsrichtung für Mais"
           >
             <ChoiceLink
-              href={`/feld/${fieldId}/ranking?usage=koernermais`}
+              href={`/feld/${fieldId}/ranking?usage=koernermais${farmQuerySuffix}`}
               role="radio"
               aria-checked={selectedUsage === "koernermais"}
               data-testid="usage-option-koernermais"
@@ -270,7 +338,7 @@ export function AnbauCropUsageSection({
             />
 
             <ChoiceLink
-              href={`/feld/${fieldId}/ranking?usage=silomais`}
+              href={`/feld/${fieldId}/ranking?usage=silomais${farmQuerySuffix}`}
               role="radio"
               aria-checked={selectedUsage === "silomais"}
               data-testid="usage-option-silomais"
@@ -282,7 +350,7 @@ export function AnbauCropUsageSection({
             />
 
             <ChoiceLink
-              href={`/feld/${fieldId}/ranking?usage=biogasmais`}
+              href={`/feld/${fieldId}/ranking?usage=biogasmais${farmQuerySuffix}`}
               role="radio"
               aria-checked={selectedUsage === "biogasmais"}
               data-testid="usage-option-biogasmais"
