@@ -25,6 +25,7 @@ import { Badge, DemoBadge } from "@/components/ui/Badge";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { PageSkeleton } from "@/components/ui/Skeleton";
+import { withBasePath } from "@/lib/basePath";
 import { getAgronomyUsageLabel } from "@/lib/fieldAgronomyProfile";
 import { num } from "@/lib/format";
 import { requireField } from "@/server/pages";
@@ -111,7 +112,7 @@ export async function Sorte({ params }: { params: Promise<{ fieldId: string; var
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y border-divider py-3">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-small text-fg-muted">
             <Image
-              src={e.breeder.logo}
+              src={withBasePath(e.breeder.logo)}
               alt={e.breeder.name}
               width={100}
               height={30}

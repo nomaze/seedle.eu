@@ -8,6 +8,7 @@ import { useLanguage } from "@/components/shell/LanguageContext";
 import { Button, buttonClass } from "@/components/ui/Button";
 import { Card, SectionTitle } from "@/components/ui/Card";
 import { AUTH0_CONFIG } from "@/lib/auth-config";
+import { withBasePath } from "@/lib/basePath";
 import {
   DEMO_STANDARD,
   MARKEN,
@@ -131,7 +132,7 @@ export function DemoSettingsForm({ initialSettings }: { initialSettings: DemoEin
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={info.icon} alt="" width={32} height={32} className="size-8 shrink-0 rounded-control object-contain" />
+                      <img src={withBasePath(info.icon)} alt="" width={32} height={32} className="size-8 shrink-0 rounded-control object-contain" />
                       <span className="font-semibold text-fg">{info.demoLabel ?? info.name}</span>
                       {info.demoLabel && info.demoLabel !== info.name ? (
                         <span className="sr-only">{info.name}</span>

@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const isStaticExport = process.env.STATIC_EXPORT === "1";
+const rawBasePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").trim().replace(/\/+$/, "");
+const basePath = rawBasePath.startsWith("/") ? rawBasePath : "";
 
 /**
  * Production-grade HTTP security headers conforming to OWASP ASVS 5.0 and Next.js guidelines.
@@ -35,6 +37,7 @@ export const SECURITY_HEADERS = [
 
 const nextConfig: NextConfig = {
   ...(isStaticExport ? { output: "export" } : {}),
+  ...(isStaticExport && basePath ? { basePath } : {}),
   images: { unoptimized: true },
   transpilePackages: [
     "@seedle/core",

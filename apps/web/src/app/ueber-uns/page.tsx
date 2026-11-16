@@ -7,6 +7,7 @@ import Link from "next/link";
 import { MotivFeldmosaik } from "@/components/motive/Feldmosaik";
 import { CallTeamButton } from "@/components/spross/AskSpross";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
+import { withBasePath } from "@/lib/basePath";
 import { TEAM } from "@/lib/team";
 
 export const metadata: Metadata = {
@@ -39,12 +40,12 @@ function resolveFinnPortraitSrc(): string | null {
       join(process.cwd(), "apps", "web", "public", "team", "finn-gaida.jpg"),
     ];
     if (candidates.some((p) => existsSync(p))) {
-      return "/team/finn-gaida.jpg";
+      return withBasePath("/team/finn-gaida.jpg");
     }
   } catch {
     // Fallback to static public path below when node:fs is unavailable.
   }
-  return "/team/finn-gaida.jpg";
+  return withBasePath("/team/finn-gaida.jpg");
 }
 
 const FOUNDERS: readonly FounderProfile[] = [
@@ -53,7 +54,7 @@ const FOUNDERS: readonly FounderProfile[] = [
     name: "Jean-Pascal Lutze",
     role: "Gründer & CEO",
     focus: "Robotik, Raumfahrt & Strategie der Umweltinteraktion",
-    imageSrc: "/team/jean-pascal-lutze.jpg",
+    imageSrc: withBasePath("/team/jean-pascal-lutze.jpg"),
     imageAlt: "Jean-Pascal Lutze · Gründer und CEO von NoMaze und Seedle",
     quote:
       "Mich hat schon als Mechatroniker fasziniert, wie große Maschinen auf dem Feld arbeiten. Heute bauen wir mit derselben Ingenieurs-Präzision Werkzeuge für die wichtigste Maschine der Natur: die Genetik deiner Pflanzen.",
@@ -159,7 +160,7 @@ function Portrait({
   if (founder.imageSrc) {
     return (
       <Image
-        src={founder.imageSrc}
+        src={withBasePath(founder.imageSrc)}
         alt={founder.imageAlt}
         width={800}
         height={800}

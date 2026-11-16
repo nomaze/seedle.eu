@@ -26,6 +26,7 @@ import { useSpross } from "@/components/spross/SprossContext";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink, buttonClass } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { withBasePath } from "@/lib/basePath";
 import {
   type AgronomyUsageOption,
   createDefaultAgronomyProfile,
@@ -2621,7 +2622,7 @@ export function FieldRankingView({
                       <div className="mt-1 flex items-center gap-2 text-small text-fg-muted">
                         {item.breederLogo ? (
                           <Image
-                            src={item.breederLogo}
+                            src={withBasePath(item.breederLogo)}
                             alt=""
                             width={64}
                             height={20}

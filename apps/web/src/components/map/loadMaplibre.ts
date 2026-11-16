@@ -1,3 +1,5 @@
+import { withBasePath } from "@/lib/basePath";
+
 let pmtilesProtocolRegistered = false;
 
 /** Loads MapLibre in browser runtime, configures web worker asset path, and registers PMTiles protocol. */
@@ -6,8 +8,9 @@ export async function loadMaplibre() {
     import("maplibre-gl"),
     import("pmtiles"),
   ]);
-  if (maplibregl.getWorkerUrl() !== "/vendor/maplibre-gl-worker.mjs") {
-    maplibregl.setWorkerUrl("/vendor/maplibre-gl-worker.mjs");
+  const workerUrl = withBasePath("/vendor/maplibre-gl-worker.mjs");
+  if (maplibregl.getWorkerUrl() !== workerUrl) {
+    maplibregl.setWorkerUrl(workerUrl);
   }
   if (!pmtilesProtocolRegistered && typeof maplibregl.addProtocol === "function") {
     try {

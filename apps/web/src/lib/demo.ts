@@ -1,3 +1,5 @@
+import { withBasePath } from "@/lib/basePath";
+
 /**
  * Demo settings: configured brand appearance, active feature toggles,
  * and environmental simulation parameters (target date/season).
@@ -111,7 +113,7 @@ export const MARKEN_INFO: Record<
     demoLabel: "seedle · On Cream (Light Master)",
     beschreibung: "Offizielles Master-Design: Helles Creme (#F5F0E1), Feldgrün (#1F5C3F), Blatt-Akzent (#3F8A4E)",
     themeColor: "#f5f0e1",
-    icon: "/brand/master-svg/seedle_app-icon_cream.svg",
+    icon: withBasePath("/brand/master-svg/seedle_app-icon_cream.svg"),
   },
   seedle: {
     name: "seedle",
@@ -119,7 +121,7 @@ export const MARKEN_INFO: Record<
     demoLabel: "seedle · On Cream (Light Master)",
     beschreibung: "Offizielles Master-Design: Helles Creme (#F5F0E1), Feldgrün (#1F5C3F), Blatt-Akzent (#3F8A4E)",
     themeColor: "#f5f0e1",
-    icon: "/brand/master-svg/seedle_app-icon_cream.svg",
+    icon: withBasePath("/brand/master-svg/seedle_app-icon_cream.svg"),
   },
   "seedle-feldgruen": {
     name: "seedle Feldgrün",
@@ -127,7 +129,7 @@ export const MARKEN_INFO: Record<
     demoLabel: "seedle · Field Green (Social Kit)",
     beschreibung: "Sattes Feldgrün (#1F5C3F), Creme-Typo (#F5F0E1), Weizengold (#D7A774), Keimblatt (#A8D8A0)",
     themeColor: "#1f5c3f",
-    icon: "/brand/master-svg/seedle_app-icon_field-green.svg",
+    icon: withBasePath("/brand/master-svg/seedle_app-icon_field-green.svg"),
   },
   "seedle-dark": {
     name: "seedle Dark",
@@ -135,7 +137,7 @@ export const MARKEN_INFO: Record<
     demoLabel: "seedle · Dark Executive",
     beschreibung: "NoMaze Obsidian (#08100C), Smaragd-Aura (#17462F), Weizengold (#D7A774), Signalorange (#FF7B00)",
     themeColor: "#08100c",
-    icon: "/brand/master-svg/seedle_app-icon_dark.svg",
+    icon: withBasePath("/brand/master-svg/seedle_app-icon_dark.svg"),
   },
   sortenkompass: {
     name: "Sortenkompass",
@@ -143,7 +145,7 @@ export const MARKEN_INFO: Record<
     demoLabel: "Sortenkompass (Warm)",
     beschreibung: "Kompass mit Saatkorn-Nadel, warmes Creme mit Gold",
     themeColor: "#f7f2e7",
-    icon: "/marke/icon-sortenkompass.svg",
+    icon: withBasePath("/marke/icon-sortenkompass.svg"),
   },
   "sortenkompass-blau": {
     name: "Sortenkompass Blau",
@@ -151,6 +153,6 @@ export const MARKEN_INFO: Record<
     demoLabel: "Sortenkompass (Blau)",
     beschreibung: "Ursprünglicher Auftritt mit Himmelblau und Blattgrün",
     themeColor: "#eef7fd",
-    icon: "/marke/icon-sortenkompass-blau.svg",
+    icon: withBasePath("/marke/icon-sortenkompass-blau.svg"),
   },
 };
